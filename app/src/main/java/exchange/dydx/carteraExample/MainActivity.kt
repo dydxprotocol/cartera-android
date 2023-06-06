@@ -1,15 +1,32 @@
 package exchange.dydx.carteraexample
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import exchange.dydx.cartera.Test
+import androidx.activity.ComponentActivity
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.runtime.Composable
+import androidx.activity.compose.setContent
+import exchange.dydx.carteraExample.WalletList
 
-class MainActivity : AppCompatActivity() {
+
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        val test = Test()
-        test.test()
+        setContent {
+            MyApp {
+                WalletList.Content()
+            }
+        }
     }
 }
+
+@Composable
+fun MyApp(content: @Composable () -> Unit) {
+    MaterialTheme {
+        Surface {
+            content()
+        }
+    }
+}
+
+

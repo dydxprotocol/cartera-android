@@ -11,18 +11,22 @@ data class WalletRequest(
 
 data class WalletTransactionRequest(
     val walletRequest: WalletRequest,
- //   val ethereum: EthereumTransactionRequest?
-) {
-  //  constructor(walletRequest: WalletRequest, ethereum: EthereumTransactionRequest?) : this(walletRequest, ethereum)
-}
+    val ethereum: EthereumTransactionRequest?
+)
 
+data class EthereumTransactionRequest(
+    //val transaction: EthereumTransaction,
+    //val gasPrice: BigUInt?,
+    //val gas: BigUInt?,
+    val nonce: Int?
+)
 data class EthereumAddChainRequest(
     val chainId: String,
 )
 
 typealias WalletConnectedCompletion = (info: WalletInfo?) -> Unit
-typealias WalletOperationCompletion = (signed: String?, error: Error?) -> Unit
-typealias WalletConnectCompletion = (info: WalletInfo?, error: Error?) -> Unit
+typealias WalletOperationCompletion = (signed: String?, error: WalletError?) -> Unit
+typealias WalletConnectCompletion = (info: WalletInfo?, error: WalletError?) -> Unit
 
 interface WalletOperationProtocol {
     fun connect(request: WalletRequest, completion: WalletConnectCompletion)

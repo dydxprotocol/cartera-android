@@ -1,13 +1,24 @@
 package exchange.dydx.cartera
 
+import android.app.Application
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import androidx.activity.result.ActivityResultLauncher
+import com.coinbase.android.nativesdk.CoinbaseWalletSDK
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.walletconnect.android.CoreClient
+import com.walletconnect.android.Core
+import com.walletconnect.android.relay.ConnectionType
+import com.walletconnect.sign.client.Sign
+import com.walletconnect.sign.client.SignClient
 import exchange.dydx.cartera.entities.Wallet
-import exchange.dydx.cartera.providers.MagicLinkProvider
-import exchange.dydx.cartera.providers.WalletConnectV1Provider
-import exchange.dydx.cartera.providers.WalletConnectV2Provider
-import exchange.dydx.cartera.providers.WalletSegueProvider
+import exchange.dydx.cartera.walletprovider.providers.MagicLinkProvider
+import exchange.dydx.cartera.walletprovider.providers.WalletConnectV1Provider
+import exchange.dydx.cartera.walletprovider.providers.WalletConnectV2Provider
+import exchange.dydx.cartera.walletprovider.providers.WalletSegueProvider
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import java.lang.reflect.Type
@@ -35,10 +46,21 @@ sealed class WalletConnectionType(val rawValue: String) {
 }
 
 class CarteraConfig(
-    val walletProvidersConfig: WalletProvidersConfig = WalletProvidersConfig()
+    private val walletProvidersConfig: WalletProvidersConfig = WalletProvidersConfig(),
+    private val application: Application,
+    private val launcher: ActivityResultLauncher<Intent>?
 ) {
     companion object {
-        var shared = CarteraConfig()
+        var shared: CarteraConfig? = null
+
+        fun handleResponse(url: Uri): Boolean {
+            shared?.registration?.get(WalletConnectionType.WalletSegue)?.provider?.let { provider ->
+                val provider = provider as? WalletSegueProvider
+                return provider?.handleResponse(url) ?: false
+
+            }
+            return false
+        }
     }
 
     private val registration: MutableMap<WalletConnectionType, RegistrationConfig> = mutableMapOf()
@@ -47,35 +69,18 @@ class CarteraConfig(
         get() = _wallets ?: emptyList()
 
    init {
-       registration[WalletConnectionType.WalletConnect] = RegistrationConfig(WalletConnectV1Provider(), null)
+       registration[WalletConnectionType.WalletConnect] = RegistrationConfig(
+           provider = WalletConnectV1Provider()
+       )
        registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
-           WalletConnectV2Provider(), null)
-       registration[WalletConnectionType.WalletConnect] = RegistrationConfig(WalletSegueProvider(), null)
-       registration[WalletConnectionType.MagicLink] = RegistrationConfig(MagicLinkProvider(), null)
-
-//        URLHandler.shared = UIApplication.shared
-//
-//        walletProvidersConfig.walletSegue?.callbackUrl?.let { walletSegueCallbackUrl ->
-//            if (!CoinbaseWalletSDK.isConfigured) {
-//                CoinbaseWalletSDK.configure(URL(walletSegueCallbackUrl))
-//            }
-//        }
-//
-//        walletProvidersConfig.walletConnectV2?.let { walletConnectV2Config ->
-//            Networking.configure(
-//                projectId = walletConnectV2Config.projectId,
-//                socketFactory = DefaultSocketFactory()
-//            )
-//
-//            val metadata = AppMetadata(
-//                name = walletConnectV2Config.clientName,
-//                description = walletConnectV2Config.clientDescription,
-//                url = walletConnectV2Config.clientUrl,
-//                icons = walletConnectV2Config.iconUrls
-//            )
-//
-//            Pair.configure(metadata)
-//        }
+           provider = WalletConnectV2Provider(walletProvidersConfig.walletConnectV2, application),
+       )
+       registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
+           provider = WalletSegueProvider(walletProvidersConfig.walletSegue, application, launcher),
+       )
+       registration[WalletConnectionType.MagicLink] = RegistrationConfig(
+           provider = MagicLinkProvider(),
+       )
     }
 
     fun registerProvider(
@@ -115,7 +120,7 @@ class CarteraConfig(
 
     private data class RegistrationConfig(
         val provider: WalletOperationProviderProtocol,
-        val consent: WalletUserConsentProtocol?
+        val consent: WalletUserConsentProtocol? = null
     )
 }
 

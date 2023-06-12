@@ -1,11 +1,19 @@
-package exchange.dydx.carteraExample
+package exchange.dydx.carteraexample
 
+import android.app.Application
+import android.content.ActivityNotFoundException
 import android.content.Context
+import android.content.Intent
+import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -30,151 +38,363 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import exchange.dydx.cartera.CarteraConfig
+import exchange.dydx.cartera.CarteraProvider
 import exchange.dydx.cartera.entities.Wallet
+import exchange.dydx.cartera.entities.connections
+import exchange.dydx.cartera.entities.installed
+import exchange.dydx.cartera.entities.openPlayStore
+import exchange.dydx.cartera.typeddata.EIP712DomainTypedDataProvider
+import exchange.dydx.cartera.typeddata.WalletTypedData
+import exchange.dydx.cartera.walletprovider.EthereumTransactionRequest
+import exchange.dydx.cartera.walletprovider.WalletError
+import exchange.dydx.cartera.walletprovider.WalletInfo
+import exchange.dydx.cartera.walletprovider.WalletRequest
+import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
+import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
+import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-class WalletList {
+object WalletList {
     enum class WalletAction {
         Connect, SignMessage, SignTypedData, SignTransaction
     }
 
     data class WalletListState(
         val wallets: List<Wallet> = listOf(),
-        val walletAction: ((WalletAction) -> Unit)? = null
+        var selectedWallet: Wallet? = null,
+        val walletAction: ((WalletAction, Wallet?) -> Unit)? = null
     )
 
-    companion object {
-        @OptIn(ExperimentalMaterialApi::class)
-        @Composable
-        fun Content() {
-            val context = LocalContext.current
-            val state = remember {
-                val viewModel = WalletListViewModel(context)
-                viewModel.viewState
-            }
-
-            val bottomSheetState =
-                rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
-
-            val coroutineScope = rememberCoroutineScope()
-
-            ModalBottomSheetLayout(
-                sheetContent = {
-                    walletActionSheetView(viewState = state.value)
-                },
-                sheetState = bottomSheetState,
-            ) {
-                walletListContent(viewState = state.value,
-                    coroutineScope = coroutineScope,
-                    bottomSheetState = bottomSheetState)
-            }
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    fun Content(launcher: ActivityResultLauncher<Intent>) {
+        val context = LocalContext.current
+        val state = remember {
+            val viewModel = WalletListViewModel(context, launcher)
+            viewModel.viewState
         }
 
-        @OptIn(ExperimentalMaterialApi::class)
-        @Composable
-        fun walletListContent(viewState: WalletListState,
-                              coroutineScope: CoroutineScope,
-                              bottomSheetState: ModalBottomSheetState
-        ) {
-            val contextForToast = LocalContext.current.applicationContext
+        val bottomSheetState =
+            rememberModalBottomSheetState(initialValue = ModalBottomSheetValue.Hidden)
 
-            LazyColumn {
-                items(items = viewState.wallets) { wallet ->
-                    wallet.name?.let {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
+        val coroutineScope = rememberCoroutineScope()
+
+        ModalBottomSheetLayout(
+            sheetContent = {
+                walletActionSheetView(viewState = state.value)
+            },
+            sheetState = bottomSheetState,
+        ) {
+            walletListContent(
+                viewState = state.value,
+                coroutineScope = coroutineScope,
+                bottomSheetState = bottomSheetState
+            )
+        }
+    }
+
+    @OptIn(ExperimentalMaterialApi::class)
+    @Composable
+    fun walletListContent(
+        viewState: WalletListState,
+        coroutineScope: CoroutineScope,
+        bottomSheetState: ModalBottomSheetState
+    ) {
+        val context = LocalContext.current
+        LazyColumn {
+            items(items = viewState.wallets) { wallet ->
+                wallet.name?.let { walletName ->
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                if (wallet.installed(context) ?: false) {
+                                    viewState.selectedWallet = wallet
                                     coroutineScope.launch {
                                         bottomSheetState.show()
                                     }
+                                } else {
+                                    wallet.openPlayStore(context)
                                 }
-                        ) {
-                            Text(
-                                it,
-                                modifier = Modifier
-                                    .padding(16.dp)
-                                    .weight(1f, false)
-                            )
-                        }
-                        Divider()
+                            }
+                    ) {
+                        Text(
+                            walletName,
+                            modifier = Modifier
+                                .padding(16.dp)
+                                .weight(1f, false),
+                            textAlign = TextAlign.Start
+                        )
+
+                        val subText: String =
+                            when (wallet.installed(context)) {
+                                true -> "Installed"
+                                false -> "Not Installed"
+                                null -> ""
+                            }
+                        Text(
+                            subText,
+                            modifier = Modifier
+                                .padding(14.dp)
+                                .weight(1f, false),
+                            textAlign = TextAlign.End
+                        )
                     }
+                    Divider()
                 }
             }
         }
+    }
 
-        @Composable
-        fun walletActionSheetView(viewState: WalletListState) {
-            val buttonModifier = Modifier
-                .padding(all = 15.dp)
-                .fillMaxWidth()
-            val buttonTextStyle = TextStyle(fontSize = 20.sp)
+    @Composable
+    fun walletActionSheetView(viewState: WalletListState) {
+        val buttonModifier = Modifier
+            .padding(all = 15.dp)
+            .fillMaxWidth()
+        val buttonTextStyle = TextStyle(fontSize = 20.sp)
 
-            Column(horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.fillMaxWidth())
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.fillMaxWidth()
+        )
+        {
+            Text("Select Wallet Action to Test:", style = MaterialTheme.typography.h5)
+            TextButton(
+                onClick = {
+                    viewState.walletAction?.invoke(
+                        WalletAction.Connect,
+                        viewState.selectedWallet
+                    )
+                },
+                modifier = buttonModifier
+            )
             {
-                Text("Select Wallet Action to Test:", style = MaterialTheme.typography.h5)
-                TextButton(onClick = { viewState.walletAction?.invoke(WalletAction.Connect) },
-                    modifier = buttonModifier)
-                {
-                    Text("Connect", style = buttonTextStyle)
-                }
-                TextButton(onClick = { viewState.walletAction?.invoke(WalletAction.SignMessage) },
-                    modifier = buttonModifier)
-                {
-                    Text("Sign Personal Message", style = buttonTextStyle)
-                }
-                TextButton(onClick = { viewState.walletAction?.invoke(WalletAction.SignTypedData) },
-                    modifier = buttonModifier)
-                {
-                    Text("Sign TypedData", style = buttonTextStyle)
-                }
-                TextButton(onClick = { viewState.walletAction?.invoke(WalletAction.SignTransaction) },
-                    modifier = buttonModifier)
-                {
-                    Text("Sign Transaction", style = buttonTextStyle)
-                }
-                Spacer(modifier = Modifier.height(20.dp))
-                TextButton(onClick = { /* Handle click */ },
-                    modifier = buttonModifier)
-                {
-                    Text("Cancel", style = buttonTextStyle)
-                }
+                Text("Connect", style = buttonTextStyle)
+            }
+            TextButton(
+                onClick = {
+                    viewState.walletAction?.invoke(
+                        WalletAction.SignMessage,
+                        viewState.selectedWallet
+                    )
+                },
+                modifier = buttonModifier
+            )
+            {
+                Text("Sign Personal Message", style = buttonTextStyle)
+            }
+            TextButton(
+                onClick = {
+                    viewState.walletAction?.invoke(
+                        WalletAction.SignTypedData,
+                        viewState.selectedWallet
+                    )
+                },
+                modifier = buttonModifier
+            )
+            {
+                Text("Sign TypedData", style = buttonTextStyle)
+            }
+            TextButton(
+                onClick = {
+                    viewState.walletAction?.invoke(
+                        WalletAction.SignTransaction,
+                        viewState.selectedWallet
+                    )
+                },
+                modifier = buttonModifier
+            )
+            {
+                Text("Sign Transaction", style = buttonTextStyle)
+            }
+            Spacer(modifier = Modifier.height(20.dp))
+            TextButton(
+                onClick = { /* Handle click */ },
+                modifier = buttonModifier
+            )
+            {
+                Text("Cancel", style = buttonTextStyle)
             }
         }
     }
 }
 
-class WalletListViewModel(val context: Context): ViewModel() {
-    var viewState: MutableState<WalletList.WalletListState> = mutableStateOf(WalletList.WalletListState(listOf()))
+class WalletListViewModel(
+    private val context: Context,
+    private val launcher: ActivityResultLauncher<Intent>
+    ): ViewModel(), WalletStatusDelegate {
+    var viewState: MutableState<WalletList.WalletListState> =
+        mutableStateOf(WalletList.WalletListState(listOf()))
+
+    private val provider: CarteraProvider by lazy {
+        val provider = CarteraProvider(context)
+        provider.walletStatusDelegate = this
+        provider
+    }
 
     init {
         viewModelScope.launch {
-            CarteraConfig.shared = CarteraConfig(WalletProvidersConfigUtil.getConfig())
-            CarteraConfig.shared.registerWallets(context)
-            viewState.value = WalletList.WalletListState(CarteraConfig.shared.wallets,
-                walletAction = { action ->
-                when (action) {
-                    WalletList.WalletAction.Connect -> {
+            CarteraConfig.shared = CarteraConfig(
+                walletProvidersConfig = WalletProvidersConfigUtil.getWalletProvidersConfig(),
+                application = context.applicationContext as Application,
+                launcher = launcher
+            )
+            CarteraConfig.shared?.registerWallets(context)
+            viewState.value = WalletList.WalletListState(
+                wallets = CarteraConfig.shared?.wallets ?: listOf(),
+                walletAction = { action: WalletList.WalletAction, wallet: Wallet? ->
+                    when (action) {
+                        WalletList.WalletAction.Connect -> {
+                            if (wallet != null) {
+                                testConnect(wallet)
+                            }
+                        }
 
-                    }
-                    WalletList.WalletAction.SignMessage -> {
+                        WalletList.WalletAction.SignMessage -> {
+                            if (wallet != null) {
+                                testSignMessage(wallet)
+                            }
+                        }
 
-                    }
-                    WalletList.WalletAction.SignTypedData -> {
+                        WalletList.WalletAction.SignTypedData -> {
+                            if (wallet != null) {
+                                testSignTypedData(wallet)
+                            }
+                        }
 
-                    }
-                    WalletList.WalletAction.SignTransaction -> {
-
+                        WalletList.WalletAction.SignTransaction -> {
+                            if (wallet != null) {
+                                testSendTransaction(wallet)
+                            }
+                        }
                     }
                 }
-            })
+            )
         }
+    }
+
+    private fun testConnect(wallet: Wallet) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        provider.connect(request) { info, error ->
+            if (error != null) {
+                toastWalletError(error)
+            } else {
+                toastMessage("Connected to: ${info?.peerName ?: info?.address}")
+            }
+        }
+    }
+
+    private fun testSignMessage(wallet: Wallet) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        provider.signMessage(request = request,
+            message = "Test Message",
+            connected = { info ->
+                toastMessage("Connected to: ${info?.peerName ?: info?.address}")
+            },
+            completion = { signature, error ->
+                if (error != null) {
+                    toastWalletError(error)
+                } else {
+                    toastMessage("Signature: $signature")
+                }
+            }
+        )
+    }
+
+    private fun testSignTypedData(wallet: Wallet) {
+        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = 5, version = null)
+        dydxSign.message = message(action = "Sample Action", chainId = 5)
+
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        provider.sign(request = request,
+            typedDataProvider = dydxSign,
+            connected = { info ->
+                toastMessage("Connected to: ${info?.peerName ?: info?.address}")
+            },
+            completion = { signature, error ->
+                if (error != null) {
+                    toastWalletError(error)
+                } else {
+                    toastMessage("Signature: $signature")
+                }
+            }
+        )
+    }
+
+    private fun testSendTransaction(wallet: Wallet) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        provider.connect(request) { info, error ->
+            if (error != null) {
+                toastWalletError(error)
+            } else {
+                val ethereumRequest = EthereumTransactionRequest(
+                    fromAddress = info?.address ?: "0x00",
+                    toAddress = "0x0000000000000000000000000000000000000000",
+                    weiValue = "0x00",
+                    data = "0x00",
+                    nonce = null,
+                    gasPriceInWei = null,
+                    maxFeePerGas = null,
+                    maxPriorityFeePerGas = null,
+                    gasLimit = null,
+                    chainId = "5"
+                )
+                val request =
+                    WalletTransactionRequest(walletRequest = request, ethereum = ethereumRequest)
+                provider.send(request = request,
+                    connected = { info ->
+                        toastMessage("Connected to: ${info?.peerName ?: info?.address}")
+                    },
+                    completion = { txHash, error ->
+                        if (error != null) {
+                            toastWalletError(error)
+                        } else {
+                            toastMessage("Transaction Hash: $txHash")
+                        }
+                    }
+                )
+            }
+        }
+    }
+
+    override fun statusChanged(status: WalletStatusProtocol) {
+        toastMessage("ConnectionDeeplink: ${status.connectionDeeplink ?: ""}")
+    }
+
+    private fun toastMessage(message: String) {
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toastWalletError(error: WalletError) {
+        Toast.makeText(context, "$error.title: $error.message", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun message(action: String, chainId: Int): WalletTypedData {
+        val definitions = mutableListOf<Map<String, String>>()
+        val data = mutableMapOf<String, Any>()
+        definitions.add(type(name = "action", type = "string"))
+        data["action"] = action
+        if (chainId == 1) {
+            definitions.add(type(name = "onlySignOn", type = "string"))
+            data["onlySignOn"] = "https://trade.dydx.exchange"
+        }
+
+        val message = WalletTypedData(typeName = "dYdX")
+        message.definitions = definitions
+        message.data = data
+        return message
+    }
+
+    private fun type(name: String, type: String): Map<String, String> {
+        return mapOf("name" to name, "type" to type)
     }
 }

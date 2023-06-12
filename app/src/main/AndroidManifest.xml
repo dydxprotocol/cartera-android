@@ -3,18 +3,18 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
+        android:name="exchange.dydx.carteraexample.CarteraSampleApplication"
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CarteraExample"
-        tools:replace="android:dataExtractionRules"
-        tools:targetApi="31">
+        tools:targetApi="31" >
+
         <activity
-            android:name=".MainActivity"
+            android:name="exchange.dydx.carteraexample.MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,5 +23,18 @@
             </intent-filter>
         </activity>
     </application>
+
+    <queries>
+        <!-- Explicit apps you know in advance about: -->
+        <package android:name="io.metamask"/>
+        <package android:name="org.toshi"/>
+        <package android:name="im.token.app"/>
+        <package android:name="com.wallet.crypto.trustapp"/>
+        <package android:name="io.zerion.android"/>
+        <package android:name="vip.mytokenpocket"/>
+        <package android:name="me.rainbow"/>
+        <package android:name="io.oneinch.android"/>
+        <package android:name="pro.huobi"/>
+    </queries>
 
 </manifest>

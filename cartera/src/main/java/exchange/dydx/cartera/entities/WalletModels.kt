@@ -48,13 +48,14 @@ data class WalletMetadata (
 data class WalletConnections (
     @SerializedName("type"      ) var type      : String? = null,
     @SerializedName("native"    ) var native    : String? = null,
-    @SerializedName("universal" ) var universal : String? = null
+    @SerializedName("universal" ) var universal : String? = null,
 )
 
 data class WalletConfig (
     @SerializedName("comment"       ) var comment       : String?                = null,
     @SerializedName("iosMinVersion" ) var iosMinVersion : String?                = null,
     @SerializedName("encoding"      ) var encoding      : String?                = null,
+    @SerializedName("androidPackage"   ) var androidPackage   : String?          = null,
     @SerializedName("connections"   ) var connections   : ArrayList<WalletConnections> = arrayListOf()
 )
 

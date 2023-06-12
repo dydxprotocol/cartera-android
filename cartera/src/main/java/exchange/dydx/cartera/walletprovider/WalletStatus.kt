@@ -33,7 +33,7 @@ interface WalletStatusProviding {
 }
 
 data class WalletStatusImp(
-    override var connectedWallet: WalletInfo?,
+    override var connectedWallet: WalletInfo? = null,
     override var state: WalletState = WalletState.IDLE,
-    override var connectionDeeplink: String?
+    override var connectionDeeplink: String? = null,
 ) : WalletStatusProtocol

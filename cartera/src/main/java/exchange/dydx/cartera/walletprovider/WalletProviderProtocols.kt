@@ -14,12 +14,21 @@ data class WalletTransactionRequest(
     val ethereum: EthereumTransactionRequest?
 )
 
+typealias BigInt = String
+
 data class EthereumTransactionRequest(
-    //val transaction: EthereumTransaction,
-    //val gasPrice: BigUInt?,
-    //val gas: BigUInt?,
-    val nonce: Int?
+    val fromAddress: String,
+    val toAddress: String?,
+    val weiValue: BigInt,
+    val data: String,
+    val nonce: Int?,
+    val gasPriceInWei: BigInt?,
+    val maxFeePerGas: BigInt?,
+    val maxPriorityFeePerGas: BigInt?,
+    val gasLimit: BigInt?,
+    val chainId: String
 )
+
 data class EthereumAddChainRequest(
     val chainId: String,
 )

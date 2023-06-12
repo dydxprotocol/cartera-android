@@ -335,7 +335,7 @@
       "androidPackage": "me.rainbow",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "rainbow:",
           "universal": "https://rnbwapp.com"
         }

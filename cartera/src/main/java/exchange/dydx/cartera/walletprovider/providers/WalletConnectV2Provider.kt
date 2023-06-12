@@ -155,10 +155,6 @@ class WalletConnectV2Provider(
                             currentPairing = null
                             completion(null, error)
                         } else if (pairing != null && request.wallet != null) {
-//                            val sessions = SignClient.getListOfActiveSessions()
-//                            if (sessions.count() > 0) {
-//
-//                            }
                             currentPairing = pairing
                             _walletStatus.connectedWallet = fromPairing(pairing, request.wallet)
                             completion(_walletStatus.connectedWallet, null)
@@ -188,7 +184,29 @@ class WalletConnectV2Provider(
         connected: WalletConnectedCompletion?,
         completion: WalletOperationCompletion
     ) {
-        TODO("Not yet implemented")
+        connect(request) { info, error ->
+            if (error != null) {
+                completion(null, error)
+            } else {
+                if (connected != null) {
+                    connected(info)
+                }
+
+//                val requestParams = Sign.Params.Request(
+//                    sessionTopic = requireNotNull(DappDelegate.selectedSessionTopic),
+//                    method = "personal_sign",
+//                    params = params, // stringified JSON
+//                    chainId = "$parentChain:$chainId"
+//                )
+//
+//                reallyMakeRequest(requestParams) { result, error ->
+//                    if (error != null) {
+//                        disconnect()
+//                    }
+//                    completion(result, error)
+//                }
+            }
+        }
     }
 
     override fun sign(
@@ -225,7 +243,7 @@ class WalletConnectV2Provider(
         connectCompletions.clear()
     }
 
-    private suspend fun doConnect(completion: (pairing: Core.Model.Pairing?, error: WalletError?) -> Unit) {
+    private fun doConnect(completion: (pairing: Core.Model.Pairing?, error: WalletError?) -> Unit) {
         val namespace: String = "eip155" /*Namespace identifier, see for reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md#syntax*/
         val chains: List<String> = requestingWallet?.chains ?: emptyList()
         val methods: List<String> = listOf(
@@ -261,9 +279,8 @@ class WalletConnectV2Provider(
                     pairing = pairing
                 )
 
-            delay(1000)
-
-            SignClient.connect(connectParams,
+            SignClient.connect(
+                connect = connectParams,
                 onSuccess = {
                     Log.d(tag(this@WalletConnectV2Provider), "Connected to wallet")
                     completion(pairing, null)
@@ -278,6 +295,24 @@ class WalletConnectV2Provider(
                 }
             )
         }
+    }
+
+    private fun reallyMakeRequest(requestParams:  Sign.Params.Request, completion: WalletOperationCompletion) {
+        SignClient.request(
+            request = requestParams,
+            onSuccess = { request: Sign.Model.SentRequest ->
+                Log.d(tag(this@WalletConnectV2Provider), "Wallet request made.")
+               // completion(request, null)
+            },
+            onError = { error ->
+                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
+                completion(
+                    null,
+                    WalletError(CarteraErrorCode.CONNECTION_FAILED, "SignClient.request error", error.throwable.stackTraceToString())
+                )
+
+            }
+        )
     }
 
     private fun fromPairing(pairing: Core.Model.Pairing, wallet: Wallet): WalletInfo {

@@ -39,6 +39,7 @@
       "comment": "MetaMask",
       "iosMinVersion": "0",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
+      "androidPackage": "io.metamask",
       "connections": [
         {
           "type": "walletConnect",
@@ -87,6 +88,7 @@
       "iosMinVersion": "1.8.0",
       "imageUrl": "https://s3.amazonaws.com/dydx.exchange/logos/wallets/coinbase-wallet.png",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
+      "androidPackage": "org.toshi",
       "connections": [
         {
           "type": "walletSegue",
@@ -133,6 +135,7 @@
     "config": {
       "comment": "imToken",
       "iosMinVersion": "0",
+      "androidPackage": "im.token.app",
       "connections": [
         {
           "type": "walletConnect",
@@ -183,6 +186,7 @@
       "iosMinVersion": "0",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
       "imageUrl": "https://s3.amazonaws.com/dydx.exchange/logos/wallets/trust.svg",
+      "androidPackage": "com.wallet.crypto.trustapp",
       "connections": [
         {
           "type": "walletConnectV2",
@@ -231,6 +235,7 @@
       "iosMinVersion": "0",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
       "imageUrl": "https://s3.amazonaws.com/dydx.exchange/logos/wallets/trust.svg",
+      "androidPackage": "io.zerion.android",
       "connections": [
         {
           "type": "walletConnectV2",
@@ -277,6 +282,7 @@
     "config": {
       "comment": "TokenPocket",
       "iosMinVersion": "0",
+      "androidPackage": "vip.mytokenpocket",
       "connections": [
         {
           "type": "walletConnect",
@@ -326,9 +332,10 @@
       "encoding": "=\"#%/<>?@\\^`{|}:&",
       "backlinked": true,
       "imageUrl": "https://s3.amazonaws.com/dydx.exchange/logos/wallets/rainbow.png",
+      "androidPackage": "me.rainbow",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "rainbow:",
           "universal": "https://rnbwapp.com"
         }
@@ -374,6 +381,7 @@
       "comment": "1inch",
       "iosMinVersion": "0",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
+      "androidPackage": "io.oneinch.android",
       "connections": [
         {
           "type": "walletConnect",
@@ -421,6 +429,7 @@
       "comment": "Huobi",
       "iosMinVersion": "0",
       "encoding": "=\"#%/<>?@\\^`{|}:&",
+      "androidPackage": "pro.huobi",
       "connections": [
         {
           "type": "walletConnect",

@@ -4,17 +4,16 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import exchange.dydx.cartera.entities.Wallet
+import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
+import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import exchange.dydx.cartera.walletprovider.providers.MagicLinkProvider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV1Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV2Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletSegueProvider
-import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
-import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import java.lang.reflect.Type
 
 
@@ -49,8 +48,8 @@ class CarteraConfig(
 
         fun handleResponse(url: Uri): Boolean {
             shared?.registration?.get(WalletConnectionType.WalletSegue)?.provider?.let { provider ->
-                val provider = provider as? WalletSegueProvider
-                return provider?.handleResponse(url) ?: false
+                val walletSegueProvider = provider as? WalletSegueProvider
+                return walletSegueProvider?.handleResponse(url) ?: false
 
             }
             return false

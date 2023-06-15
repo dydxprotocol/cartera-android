@@ -133,7 +133,7 @@ object WalletList {
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                if (wallet.installed(context) ?: false) {
+                                if (wallet.installed(context)) {
                                     viewState.selectedWallet = wallet
                                     coroutineScope.launch {
                                         bottomSheetState.show()
@@ -155,7 +155,6 @@ object WalletList {
                             when (wallet.installed(context)) {
                                 true -> "Installed"
                                 false -> "Not Installed"
-                                null -> ""
                             }
                         Text(
                             subText,

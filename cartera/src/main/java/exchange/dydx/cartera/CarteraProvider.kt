@@ -78,8 +78,8 @@ class CarteraProvider(private val context: Context): WalletOperationProviderProt
     override fun addChain(request: WalletRequest, chain: EthereumAddChainRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
         updateCurrentHandler(request)
         // Disregard chainId, since we don't want to check for chainId match here.
-        val request = WalletRequest(request.wallet, null, null)
-        currentRequestHandler?.addChain(request, chain, connected, completion)
+        val addChainRequest = WalletRequest(request.wallet, null, null)
+        currentRequestHandler?.addChain(addChainRequest, chain, connected, completion)
     }
 
     // Private

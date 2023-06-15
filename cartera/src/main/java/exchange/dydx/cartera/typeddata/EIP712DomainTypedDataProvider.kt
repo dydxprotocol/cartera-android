@@ -3,7 +3,7 @@ package exchange.dydx.cartera.typeddata
 class EIP712DomainTypedDataProvider(
     private val name: String,
     private val chainId: Int,
-    private val version: String?
+    private val version: String = "1.0.0"
 ) : WalletTypedDataProviderProtocol {
     var eip712: EIP712TypedData? = null
     var message: WalletTypedData? = null

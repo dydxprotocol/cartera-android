@@ -17,11 +17,11 @@ object WalletProvidersConfigUtil {
         )
 
         val walletConnectV2Config = WalletConnectV2Config(
-            "47559b2ec96c09aed9ff2cb54a31ab0e",
+            "156a34507d8e657347be0ecd294659bb",
             "dYdX",
             "dYdX Trading App",
             "https://trade.dydx.exchange/",
-            listOf<String>("https://media.dydx.exchange/logos/dydx-x.png")
+            listOf<String>("https://media.dydx.exchange/logos/dydx-x.png"),
         )
 
         val walletSegueConfig = WalletSegueConfig(

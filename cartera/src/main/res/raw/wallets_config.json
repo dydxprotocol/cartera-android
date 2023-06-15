@@ -151,9 +151,7 @@
     "description": "",
     "homepage": "https://trustwallet.com/",
     "chains": [
-      "eip155:1",
-      "eip155:42161",
-      "eip155:43114"
+      "eip155:1"
     ],
     "versions": [
       "1"

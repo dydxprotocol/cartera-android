@@ -20,25 +20,27 @@ import exchange.dydx.cartera.walletprovider.userconsent.SkippedWalletUserConsent
 class CarteraProvider(private val context: Context): WalletOperationProviderProtocol {
     private var currentRequestHandler: WalletOperationProviderProtocol? = null
 
+    private val debugQrCodeProvider =  CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectV2)
+
     fun startDebugLink(chainId: Int, completion: WalletConnectCompletion) {
-        currentRequestHandler = CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnect)
-        currentRequestHandler?.walletStatusDelegate = walletStatusDelegate
+        updateCurrentHandler(WalletRequest(null, null, chainId))
         currentRequestHandler?.connect(WalletRequest(null, null, chainId), completion)
     }
 
     // WalletOperationProviderProtocol
 
-    override var walletStatus: WalletStatusProtocol? = currentRequestHandler?.walletStatus
+    override val walletStatus: WalletStatusProtocol?
+        get() = currentRequestHandler?.walletStatus
 
-    override var walletStatusDelegate: WalletStatusDelegate?
-        get() = currentRequestHandler?.walletStatusDelegate
+    override var walletStatusDelegate: WalletStatusDelegate? = null
         set(value) {
             currentRequestHandler?.walletStatusDelegate = value
+            field = value
         }
-    override var userConsentDelegate: exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol?
-        get() = currentRequestHandler?.userConsentDelegate
+    override var userConsentDelegate: exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol? = null
         set(value) {
             currentRequestHandler?.userConsentDelegate = value
+            field = value
         }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
@@ -86,7 +88,7 @@ class CarteraProvider(private val context: Context): WalletOperationProviderProt
         val newHandler = request.wallet?.config?.connectionType(context)?.let {
             CarteraConfig.shared?.getProvider(it)
         } ?: run {
-            CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnect) // Debug QR-Code
+            debugQrCodeProvider
         }
 
         if (newHandler !== currentRequestHandler) {

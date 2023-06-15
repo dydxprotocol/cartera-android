@@ -15,11 +15,16 @@
 
         <activity
             android:name="exchange.dydx.carteraexample.MainActivity"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
+
+                <data android:scheme="app"
+                    android:host="kotlin-dapp-wc"
+                    android:pathPrefix="/request" />
             </intent-filter>
         </activity>
     </application>

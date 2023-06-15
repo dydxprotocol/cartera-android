@@ -6,14 +6,8 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.activity.result.ActivityResultLauncher
-import com.coinbase.android.nativesdk.CoinbaseWalletSDK
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
-import com.walletconnect.android.CoreClient
-import com.walletconnect.android.Core
-import com.walletconnect.android.relay.ConnectionType
-import com.walletconnect.sign.client.Sign
-import com.walletconnect.sign.client.SignClient
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.walletprovider.providers.MagicLinkProvider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV1Provider

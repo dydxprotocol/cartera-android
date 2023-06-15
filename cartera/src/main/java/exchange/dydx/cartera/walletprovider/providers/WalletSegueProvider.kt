@@ -14,6 +14,7 @@ import com.coinbase.android.nativesdk.message.response.ActionResult
 import exchange.dydx.cartera.CarteraErrorCode
 import exchange.dydx.cartera.WalletSegueConfig
 import exchange.dydx.cartera.tag
+import exchange.dydx.cartera.toHexString
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.typeddata.typedDataAsString
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
@@ -173,13 +174,13 @@ class WalletSegueProvider(
             val sendAction = Web3JsonRPC.SendTransaction(
                 request.ethereum.fromAddress,
                 request.ethereum.toAddress,
-                request.ethereum.weiValue,
+                request.ethereum.weiValue.toHexString(),
                 request.ethereum.data,
                 request.ethereum.nonce,
-                request.ethereum.gasPriceInWei,
-                request.ethereum.maxFeePerGas,
-                request.ethereum.maxPriorityFeePerGas,
-                request.ethereum.gasLimit,
+                request.ethereum.gasPriceInWei?.toHexString(),
+                request.ethereum.maxFeePerGas?.toHexString(),
+                request.ethereum.maxPriorityFeePerGas?.toHexString(),
+                request.ethereum.gasLimit?.toHexString(),
                 request.ethereum.chainId
             ).action()
             reallyMakeRequest(sendAction) { result, error ->

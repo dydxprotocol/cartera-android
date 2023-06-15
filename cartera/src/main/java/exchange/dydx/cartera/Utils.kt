@@ -3,6 +3,7 @@ package exchange.dydx.cartera
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import android.os.Build
+import java.math.BigInteger
 
 object Utils {
     fun isInstalled(packageName: String, packageManager: PackageManager): Boolean {
@@ -25,3 +26,5 @@ object Utils {
 inline fun <reified T : Any> tag(currentClass: T): String {
     return ("Wallet" + currentClass::class.java.canonicalName!!.substringAfterLast(".")).take(23)
 }
+
+fun BigInteger.toHexString() = "0x" + toString(16)

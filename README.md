@@ -15,7 +15,7 @@ username=[GITHUB_USERNAME]
 token=[GITHUB_TOKEN]
 ```
 
-Add the following the project's gradle repositories settings:
+Add the following to the project's gradle repositories settings:
 ```
     repositories {
         ....

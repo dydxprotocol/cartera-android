@@ -1,5 +1,5 @@
 # cartera-android
-Cartera is a mobile web3 wallet integrator. It acts an abtraction layer over various wallet SDKs to provide a shared interface for common wallet operations. Cartera has the built-in support of the following SDKs:
+Cartera is a mobile web3 wallet integrator. It acts as an abtraction layer over various wallet SDKs to provide a shared interface for common wallet operations. Cartera has the built-in support of the following SDKs:
 
 WalletConnect V1
 WalletConnect V2

@@ -88,7 +88,7 @@ class WalletListViewModel(
     }
 
     private fun testConnect(wallet: Wallet?) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5, context = context)
         provider.connect(request) { info, error ->
             if (error != null) {
                 toastWalletError(error)
@@ -99,7 +99,7 @@ class WalletListViewModel(
     }
 
     private fun testSignMessage(wallet: Wallet?) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5, context = context)
         provider.signMessage(request = request,
             message = "Test Message",
             connected = { info ->
@@ -119,7 +119,7 @@ class WalletListViewModel(
         val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = 5)
         dydxSign.message = message(action = "Sample Action", chainId = 5)
 
-        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5, context = context)
         provider.sign(request = request,
             typedDataProvider = dydxSign,
             connected = { info ->
@@ -136,7 +136,7 @@ class WalletListViewModel(
     }
 
     private fun testSendTransaction(wallet: Wallet?) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = 5)
+        val request = WalletRequest(wallet = wallet, address = null, chainId = 5, context = context)
         provider.connect(request) { info, error ->
             if (error != null) {
                 toastWalletError(error)

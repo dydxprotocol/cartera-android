@@ -23,8 +23,8 @@ class CarteraProvider(private val context: Context): WalletOperationProviderProt
     private val debugQrCodeProvider =  CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectV2)
 
     fun startDebugLink(chainId: Int, completion: WalletConnectCompletion) {
-        updateCurrentHandler(WalletRequest(null, null, chainId))
-        currentRequestHandler?.connect(WalletRequest(null, null, chainId), completion)
+        updateCurrentHandler(WalletRequest(null, null, chainId, context))
+        currentRequestHandler?.connect(WalletRequest(null, null, chainId, context), completion)
     }
 
     // WalletOperationProviderProtocol
@@ -78,7 +78,7 @@ class CarteraProvider(private val context: Context): WalletOperationProviderProt
     override fun addChain(request: WalletRequest, chain: EthereumAddChainRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
         updateCurrentHandler(request)
         // Disregard chainId, since we don't want to check for chainId match here.
-        val addChainRequest = WalletRequest(request.wallet, null, null)
+        val addChainRequest = WalletRequest(request.wallet, null, null, context)
         currentRequestHandler?.addChain(addChainRequest, chain, connected, completion)
     }
 

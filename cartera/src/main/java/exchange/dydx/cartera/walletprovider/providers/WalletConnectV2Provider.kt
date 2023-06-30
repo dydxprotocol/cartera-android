@@ -3,8 +3,8 @@ package exchange.dydx.cartera.walletprovider.providers
 import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
-import androidx.core.net.toUri
 import com.walletconnect.android.Core
 import com.walletconnect.android.CoreClient
 import com.walletconnect.android.relay.ConnectionType
@@ -14,6 +14,7 @@ import com.walletconnect.sign.client.Sign
 import com.walletconnect.sign.client.SignClient
 import exchange.dydx.cartera.CarteraErrorCode
 import exchange.dydx.cartera.WalletConnectV2Config
+import exchange.dydx.cartera.WalletConnectionType
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.tag
 import exchange.dydx.cartera.toHexString
@@ -127,7 +128,6 @@ class WalletConnectV2Provider(
                 connectCompletions.clear()
 
                 walletStatusDelegate?.statusChanged(_walletStatus)
-
             }
         }
 
@@ -306,21 +306,23 @@ class WalletConnectV2Provider(
         connected: WalletConnectedCompletion?,
         completion: WalletOperationCompletion
     ) {
-        val account = currentSession?.account()
-        val namespace = currentSession?.namespace()
-        val chainId = currentSession?.chainId()
-        if (account != null && namespace != null && chainId != null) {
-            val requestParams = Sign.Params.Request(
-                sessionTopic = currentSession!!.topic,
-                method = "personal_sign",
-                params = "[\"${message}\", \"${account}\"]",
-                chainId = "${namespace}:${chainId}"
-            )
-
-            connectAndMakeRequest(request, requestParams, connected, completion)
-        } else {
-            completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+        fun requestParams(): Sign.Params.Request? {
+            val account = currentSession?.account()
+            val namespace = currentSession?.namespace()
+            val chainId = currentSession?.chainId()
+            return if (account != null && namespace != null && chainId != null) {
+                return Sign.Params.Request(
+                    sessionTopic = currentSession!!.topic,
+                    method = "personal_sign",
+                    params = "[\"${message}\", \"${account}\"]",
+                    chainId = "${namespace}:${chainId}"
+                )
+            } else {
+                return null
+            }
         }
+
+        connectAndMakeRequest(request, { requestParams() }, connected, completion)
     }
 
     override fun sign(
@@ -329,22 +331,24 @@ class WalletConnectV2Provider(
         connected: WalletConnectedCompletion?,
         completion: WalletOperationCompletion
     ) {
-        val account = currentSession?.account()
-        val namespace = currentSession?.namespace()
-        val chainId = currentSession?.chainId()
-        val message = typedDataProvider?.typedDataAsString
-        if (account != null && namespace != null && chainId != null && message != null) {
-            val requestParams = Sign.Params.Request(
-                sessionTopic = currentSession!!.topic,
-                method = "eth_signTypedData",
-                params = "[\"${account}\", ${message}]",
-                chainId = "${namespace}:${chainId}"
-            )
-
-            connectAndMakeRequest(request, requestParams, connected, completion)
-        } else {
-            completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+        fun requestParams(): Sign.Params.Request? {
+            val account = currentSession?.account()
+            val namespace = currentSession?.namespace()
+            val chainId = currentSession?.chainId()
+            val message = typedDataProvider?.typedDataAsString
+            if (account != null && namespace != null && chainId != null && message != null) {
+                return Sign.Params.Request(
+                    sessionTopic = currentSession!!.topic,
+                    method = "eth_signTypedData",
+                    params = "[\"${account}\", ${message}]",
+                    chainId = "${namespace}:${chainId}"
+                )
+            } else {
+                return null
+            }
         }
+
+        connectAndMakeRequest(request, { requestParams() }, connected, completion)
     }
 
     override fun send(
@@ -352,21 +356,24 @@ class WalletConnectV2Provider(
         connected: WalletConnectedCompletion?,
         completion: WalletOperationCompletion
     ) {
-        val account = currentSession?.account()
-        val namespace = currentSession?.namespace()
-        val chainId = currentSession?.chainId()
-        val message = request.ethereum?.toJsonRequest()
-        if (account != null && namespace != null && chainId != null && message != null) {
-            val requestParams = Sign.Params.Request(
-                sessionTopic = currentSession!!.topic,
-                method = "eth_sendTransaction",
-                params = "[${message}]",
-                chainId = "${namespace}:${chainId}"
-            )
-            connectAndMakeRequest(request.walletRequest, requestParams, connected, completion)
-        } else {
-            completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+        fun requestParams(): Sign.Params.Request? {
+            val account = currentSession?.account()
+            val namespace = currentSession?.namespace()
+            val chainId = currentSession?.chainId()
+            val message = request.ethereum?.toJsonRequest()
+            if (account != null && namespace != null && chainId != null && message != null) {
+                return Sign.Params.Request(
+                    sessionTopic = currentSession!!.topic,
+                    method = "eth_sendTransaction",
+                    params = "[${message}]",
+                    chainId = "${namespace}:${chainId}"
+                )
+            } else {
+                return null
+            }
         }
+
+        connectAndMakeRequest(request.walletRequest, { requestParams() }, connected, completion)
     }
 
     override fun addChain(
@@ -378,10 +385,10 @@ class WalletConnectV2Provider(
         TODO("Not yet implemented")
     }
 
-    private fun doConnect(request: WalletRequest?, completion: (pairing: Core.Model.Pairing?, error: WalletError?) -> Unit) {
+    private fun doConnect(request: WalletRequest, completion: (pairing: Core.Model.Pairing?, error: WalletError?) -> Unit) {
         val namespace: String = "eip155" /*Namespace identifier, see for reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md#syntax*/
-        val chain: String =  if (request?.chainId != null) {
-            "eip155:${request?.chainId}"
+        val chain: String =  if (request.chainId != null) {
+            "eip155:${request.chainId}"
         } else {
             "eip155:5"
         }
@@ -438,12 +445,13 @@ class WalletConnectV2Provider(
                     )
                 }
             )
+            openPeerDeeplink(request, pairing)
         }
     }
 
     private fun connectAndMakeRequest(
         request: WalletRequest,
-        requestParams: Sign.Params.Request,
+        requestParams: (() -> Sign.Params.Request?),
         connected: WalletConnectedCompletion?,
         completion: WalletOperationCompletion
     ) {
@@ -455,8 +463,13 @@ class WalletConnectV2Provider(
                     connected(info)
                 }
 
-                reallyMakeRequest(requestParams) { result, error ->
-                    completion(result, error)
+                val params = requestParams()
+                if (params != null) {
+                    reallyMakeRequest(request, params) { result, error ->
+                        completion(result, error)
+                    }
+                } else {
+                    completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
                 }
             } else {
                 completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
@@ -464,10 +477,12 @@ class WalletConnectV2Provider(
         }
     }
 
-    private fun reallyMakeRequest(requestParams: Sign.Params.Request, completion: WalletOperationCompletion) {
-        openPeerDeeplink()
-
-        SignClient.request(
+    private fun reallyMakeRequest(
+        request: WalletRequest,
+        requestParams: Sign.Params.Request,
+        completion: WalletOperationCompletion
+    ) {
+         SignClient.request(
             request = requestParams,
             onSuccess = { request: Sign.Model.SentRequest ->
                 Log.d(tag(this@WalletConnectV2Provider), "Wallet request made.")
@@ -477,10 +492,16 @@ class WalletConnectV2Provider(
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
                 completion(
                     null,
-                    WalletError(CarteraErrorCode.CONNECTION_FAILED, "SignClient.request error", error.throwable.stackTraceToString())
+                    WalletError(
+                        CarteraErrorCode.CONNECTION_FAILED,
+                        "SignClient.request error",
+                        error.throwable.stackTraceToString()
+                    )
                 )
             }
         )
+
+        openPeerDeeplink(request, currentPairing)
     }
 
     private fun fromPairing(pairing: Core.Model.Pairing, wallet: Wallet): WalletInfo {
@@ -503,20 +524,36 @@ class WalletConnectV2Provider(
         )
     }
 
-    private fun openPeerDeeplink() {
-        currentPairing?.uri?.let {
-            val deeplinkPairingUri = it.replace("wc:", "wc://")
+    private fun openPeerDeeplink(request: WalletRequest, pairing: Core.Model.Pairing?) {
+        if (request.wallet == null) {
+            Log.d(tag(this@WalletConnectV2Provider), "Wallet is null")
+            return
+        }
+        if (pairing?.uri == null) {
+            Log.d(tag(this@WalletConnectV2Provider), "Pairing is null")
+            return
+        }
+        // val deeplinkPairingUri = it.replace("wc:", "wc://")
+        val url = WalletConnectUtils.createUrl(
+            wallet = request.wallet,
+            deeplink = pairing?.uri,
+            type = WalletConnectionType.WalletConnectV2,
+            context = request.context
+        )
+        val deeplinkPairingUri = url?.toURI()?.toString()
+        if (deeplinkPairingUri != null) {
             try {
-                val intent = Intent(Intent.ACTION_VIEW, deeplinkPairingUri.toUri())
+                val uri = Uri.parse(deeplinkPairingUri)
+                val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 application.startActivity(intent)
             } catch (exception: ActivityNotFoundException) {
                 Log.d(tag(this@WalletConnectV2Provider), "There is no app to handle deep linkt")
-
             }
+        } else {
+            Log.d(tag(this@WalletConnectV2Provider), "Imvalid deeplink uri")
         }
     }
-
 }
 
 private fun Sign.Model.ApprovedSession.chainId(): Int? {

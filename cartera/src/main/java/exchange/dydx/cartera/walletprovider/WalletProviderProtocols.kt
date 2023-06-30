@@ -1,5 +1,6 @@
 package exchange.dydx.cartera.walletprovider
 
+import android.content.Context
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import java.math.BigInteger
@@ -8,6 +9,7 @@ data class WalletRequest(
     val wallet: Wallet? = null,
     val address: String? = null,
     val chainId: Int? = null,
+    val context: Context
 )
 
 data class WalletTransactionRequest(

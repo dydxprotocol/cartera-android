@@ -42,7 +42,7 @@
       "androidPackage": "io.metamask",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "metamask:",
           "universal": "https://metamask.app.link"
         }
@@ -138,7 +138,7 @@
       "androidPackage": "im.token.app",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "imtokenv2:",
           "universal": ""
         }
@@ -238,7 +238,7 @@
         {
           "type": "walletConnectV2",
           "native": "zerion:",
-          "universal": ""
+          "universal": "https://wallet.zerion.io"
         }
       ]
     }
@@ -283,7 +283,7 @@
       "androidPackage": "vip.mytokenpocket",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "tpoutside:",
           "universal": ""
         }
@@ -382,7 +382,7 @@
       "androidPackage": "io.oneinch.android",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "oneinch:",
           "universal": "https://wallet.1inch.io"
         }
@@ -430,7 +430,7 @@
       "androidPackage": "pro.huobi",
       "connections": [
         {
-          "type": "walletConnect",
+          "type": "walletConnectV2",
           "native": "huobiwallet:",
           "universal": ""
         }

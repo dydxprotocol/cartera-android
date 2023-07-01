@@ -107,6 +107,7 @@ publishing {
             }
         }
     }
+    
     repositories {
         maven {
             def propsFile = rootProject.file('github.properties')

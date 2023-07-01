@@ -87,7 +87,7 @@ publishing {
         maven(MavenPublication) {
             groupId "dydxprotocol"
             artifactId "cartera-android"
-            version "0.0.2"
+            version "0.0.3"
             artifact sourceJar
             artifact "$buildDir/outputs/aar/cartera-release.aar"
 

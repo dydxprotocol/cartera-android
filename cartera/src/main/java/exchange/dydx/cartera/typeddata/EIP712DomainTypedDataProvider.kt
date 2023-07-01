@@ -9,7 +9,7 @@ class EIP712DomainTypedDataProvider(
     var message: WalletTypedData? = null
 
     init {
-        eip712 = EIP712TypedData(name, chainId, version)
+        eip712 = EIP712TypedData(name, chainId, null)
     }
 
     override fun typedData(): Map<String, Any>? {

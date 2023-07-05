@@ -23,6 +23,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
 import androidx.compose.material.ModalBottomSheetValue
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.rememberModalBottomSheetState
@@ -64,12 +65,13 @@ object WalletList {
     data class WalletListState(
         val wallets: List<Wallet> = listOf(),
         var selectedWallet: Wallet? = null,
-        val walletAction: ((WalletAction, Wallet?) -> Unit)? = null,
-        val debugQRCodeAction: ((QrCodeAction) -> Unit)? = null
+        val walletAction: ((WalletAction, Wallet?, Boolean) -> Unit)? = null,
+        val debugQRCodeAction: ((QrCodeAction, Boolean) -> Unit)? = null
     ) {
         var showingQrCodeState: Boolean by mutableStateOf(false)
         var deeplinkUri: String? by mutableStateOf(null)
         var showBottomSheet: Boolean by mutableStateOf(false)
+        var useTestnet: Boolean by mutableStateOf(true)
     }
 
     @SuppressLint("CoroutineCreationDuringComposition")
@@ -177,8 +179,8 @@ object WalletList {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                             viewState.debugQRCodeAction?.let {
-                                it(WalletList.QrCodeAction.V2)
+                            viewState.debugQRCodeAction?.let {
+                                it(WalletList.QrCodeAction.V2, viewState.useTestnet)
                             }
                         }
                 ) {
@@ -200,6 +202,29 @@ object WalletList {
                 }
                 Divider()
             }
+
+            item {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        "Goerli Testnet:",
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .weight(1f, false),
+                        textAlign = TextAlign.Start
+                    )
+
+                    Switch(
+                        checked = viewState.useTestnet,
+                        onCheckedChange = { viewState.useTestnet = it },
+                    )
+                }
+            }
+
+
         }
     }
 
@@ -220,7 +245,8 @@ object WalletList {
                 onClick = {
                     viewState.walletAction?.invoke(
                         WalletAction.Connect,
-                        viewState.selectedWallet
+                        viewState.selectedWallet,
+                        viewState.useTestnet
                     )
                 },
                 modifier = buttonModifier
@@ -232,7 +258,8 @@ object WalletList {
                 onClick = {
                     viewState.walletAction?.invoke(
                         WalletAction.SignMessage,
-                        viewState.selectedWallet
+                        viewState.selectedWallet,
+                        viewState.useTestnet
                     )
                 },
                 modifier = buttonModifier
@@ -244,7 +271,8 @@ object WalletList {
                 onClick = {
                     viewState.walletAction?.invoke(
                         WalletAction.SignTypedData,
-                        viewState.selectedWallet
+                        viewState.selectedWallet,
+                        viewState.useTestnet
                     )
                 },
                 modifier = buttonModifier
@@ -256,7 +284,8 @@ object WalletList {
                 onClick = {
                     viewState.walletAction?.invoke(
                         WalletAction.SignTransaction,
-                        viewState.selectedWallet
+                        viewState.selectedWallet,
+                        viewState.useTestnet
                     )
                 },
                 modifier = buttonModifier

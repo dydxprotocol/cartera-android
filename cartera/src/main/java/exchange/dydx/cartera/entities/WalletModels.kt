@@ -56,6 +56,7 @@ data class WalletConfig (
     @SerializedName("iosMinVersion" ) var iosMinVersion : String?                = null,
     @SerializedName("encoding"      ) var encoding      : String?                = null,
     @SerializedName("androidPackage"   ) var androidPackage   : String?          = null,
+    @SerializedName("imageUrl"      ) var imageUrl      : String?                = null,
     @SerializedName("connections"   ) var connections   : ArrayList<WalletConnections> = arrayListOf()
 )
 

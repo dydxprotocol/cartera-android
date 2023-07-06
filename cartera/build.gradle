@@ -87,7 +87,7 @@ publishing {
         maven(MavenPublication) {
             groupId "dydxprotocol"
             artifactId "cartera-android"
-            version "0.0.3"
+            version "0.0.4"
             artifact sourceJar
             artifact "$buildDir/outputs/aar/cartera-release.aar"
 
@@ -110,14 +110,13 @@ publishing {
     
     repositories {
         maven {
-            def propsFile = rootProject.file('github.properties')
-            def props = new Properties()
-            props.load(new FileInputStream(propsFile))
+            def github_username = System.getenv('github_username')
+            def github_token = System.getenv('github_token')
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
             credentials {
-                username props['username']
-                password props['token']
+                username github_username
+                password github_token
             }
         }
     }

@@ -3,11 +3,11 @@ package exchange.dydx.cartera.walletprovider
 import exchange.dydx.cartera.entities.Wallet
 
 data class WalletInfo(
-    var address: String? = null,
-    var chainId: Int? = null,
-    var wallet: Wallet? = null,
-    var peerName: String? = null,
-    var peerImageUrl: String? = null
+    val address: String? = null,
+    val chainId: Int? = null,
+    val wallet: Wallet? = null,
+    val peerName: String? = null,
+    val peerImageUrl: String? = null
 )
 
 enum class WalletState {

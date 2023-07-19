@@ -52,7 +52,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
+   // implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
 
     implementation 'com.google.code.gson:gson:2.9.0'
 
@@ -60,7 +60,7 @@ dependencies {
     // https://github.com/WalletConnect/WalletConnectKotlinV2
     //
 
-    implementation platform('com.walletconnect:android-bom:1.10.0')
+    implementation platform('com.walletconnect:android-bom:1.13.1')
     implementation('com.walletconnect:android-core')
     implementation 'com.walletconnect:sign'
     implementation 'com.walletconnect:push'
@@ -87,7 +87,7 @@ publishing {
         maven(MavenPublication) {
             groupId "dydxprotocol"
             artifactId "cartera-android"
-            version "0.0.4"
+            version "0.0.5"
             artifact sourceJar
             artifact "$buildDir/outputs/aar/cartera-release.aar"
 

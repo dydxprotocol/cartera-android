@@ -215,7 +215,7 @@ class WalletConnectV2Provider(
                  description = walletConnectV2Config.clientDescription,
                  url = walletConnectV2Config.clientUrl,
                  icons = walletConnectV2Config.iconUrls,
-                 redirect = "kotlin-dapp-wc:/request"
+                 redirect = "exchange.dydx.carteraexample"
              )
 
              CoreClient.initialize(

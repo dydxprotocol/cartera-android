@@ -3,13 +3,13 @@ package exchange.dydx.cartera.typeddata
 class EIP712DomainTypedDataProvider(
     private val name: String,
     private val chainId: Int,
-    private val version: String = "1.0.0"
+    private val version: String? = null
 ) : WalletTypedDataProviderProtocol {
     var eip712: EIP712TypedData? = null
     var message: WalletTypedData? = null
 
     init {
-        eip712 = EIP712TypedData(name, chainId, null)
+        eip712 = EIP712TypedData(name, chainId, version)
     }
 
     override fun typedData(): Map<String, Any>? {

@@ -9,10 +9,10 @@ CoinbaseWallet SDK
 
 The repo is currently private.  To access it, create a personal access token on Github and add it to the repo [link](https://docs.github.com/en/enterprise-server@3.4/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens).
 
-Create a `github.properties` file in the project's root folder and add the following:
+Add your github user name and token as shell env vars:
 ```
-username=[GITHUB_USERNAME]
-token=[GITHUB_TOKEN]
+export github_username=[GITHUB_USERNAME]
+export github_token=[GITHUB_TOKEN]
 ```
 
 Add the following to the project's gradle repositories settings:
@@ -20,14 +20,13 @@ Add the following to the project's gradle repositories settings:
     repositories {
         ....
         maven {
-            def propsFile = getRootDir().path + "/github.properties"
-            def props = new Properties()
-            props.load(new FileInputStream(propsFile))
+            val github_username = System.getenv("github_username")
+            val github_token = System.getenv("github_token")
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
+            url = uri("https://maven.pkg.github.com/dydxprotocol/abacus")
             credentials {
-                username props['username']
-                password props['token']
+                username = github_username
+                password = github_token
             }
         }
     }

@@ -8,8 +8,6 @@ import android.util.Log
 import com.walletconnect.android.Core
 import com.walletconnect.android.CoreClient
 import com.walletconnect.android.relay.ConnectionType
-import com.walletconnect.push.common.Push
-import com.walletconnect.push.dapp.client.PushDappClient
 import com.walletconnect.sign.client.Sign
 import com.walletconnect.sign.client.SignClient
 import exchange.dydx.cartera.CarteraErrorCode
@@ -234,10 +232,6 @@ class WalletConnectV2Provider(
                  Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
              }
 
-             PushDappClient.initialize(Push.Dapp.Params.Init(CoreClient, null)) { error ->
-                 Log.e(tag(this), error.throwable.stackTraceToString())
-             }
-
              SignClient.setDappDelegate(dappDelegate)
          }
     }
@@ -337,12 +331,13 @@ class WalletConnectV2Provider(
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
-            val message = typedDataProvider?.typedDataAsString
+            val message = typedDataProvider?.typedDataAsString?.replace("\"", "\\\"")
+
             return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
                 Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "eth_signTypedData",
-                    params = "[\"${account}\", ${message}]",
+                    params = "[\"${account}\", \"${message}\"]",
                     chainId = "${namespace}:${chainId}"
                 )
             } else {

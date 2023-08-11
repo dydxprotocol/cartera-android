@@ -332,7 +332,7 @@ class WalletConnectV2Provider(
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
             val message = typedDataProvider?.typedDataAsString?.replace("\"", "\\\"")
-            
+
             return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
                 Sign.Params.Request(
                     sessionTopic = sessionTopic,

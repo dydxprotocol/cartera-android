@@ -331,13 +331,13 @@ class WalletConnectV2Provider(
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
-            val message = typedDataProvider?.typedDataAsString
-
+            val message = typedDataProvider?.typedDataAsString?.replace("\"", "\\\"")
+            
             return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
                 Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "eth_signTypedData",
-                    params = "[\"${account}\", ${message}]",
+                    params = "[\"${account}\", \"${message}\"]",
                     chainId = "${namespace}:${chainId}"
                 )
             } else {

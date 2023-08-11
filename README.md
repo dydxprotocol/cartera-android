@@ -23,7 +23,7 @@ Add the following to the project's gradle repositories settings:
             val github_username = System.getenv("github_username")
             val github_token = System.getenv("github_token")
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/dydxprotocol/abacus")
+            url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
             credentials {
                 username = github_username
                 password = github_token

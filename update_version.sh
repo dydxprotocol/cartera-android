@@ -1,9 +1,8 @@
 #!/bin/sh
 
-# search for the first line that starts with "version" in cartera/ build.gradle
-# get the value in the quotes
-VERSION=$(grep "^            version" cartera/build.gradle | sed -n 's/            version "\(.*\)"/\1/p')
-
+# find the version number from the line LIBRARY_VERSION_NAME=0.0.1 in gradle.properties
+# and assign it to the variable VERSION
+VERSION=$(grep "^LIBRARY_VERSION_NAME=" gradle.properties | sed -n 's/LIBRARY_VERSION_NAME=\(.*\)/\1/p')
 
 echo "Current version is $VERSION. Enter new version (or press enter to skip):"
 read NEW_VERSION
@@ -11,6 +10,5 @@ read NEW_VERSION
 #if NEW_VERSION is not empty, replace the version in build.gradle
 if [ ! -z "$NEW_VERSION" ]; then
     echo "Updating version to $NEW_VERSION"
-    sed -i '' "s/version \"$VERSION\"/version \"$NEW_VERSION\"/" cartera/build.gradle
+    sed -i '' "s/LIBRARY_VERSION_NAME=$VERSION/LIBRARY_VERSION_NAME=$NEW_VERSION/" gradle.properties
 fi
-

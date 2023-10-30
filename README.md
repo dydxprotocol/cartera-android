@@ -40,6 +40,25 @@ dependencies {
 }
 ```
 
+### [OPTIONAL] 
+
+To build from a local copy of the library, update cartera/build.gradle to the following
+```
+apply from: 'publishLocal.gradle'
+//apply from: 'publishRemote.gradle'
+```
+Build and push the code to Maven Local repo with:
+```
+./gradlew publishLibraryDebugPublicationToMavenLocal
+```
+Then add "-local-debug" to the library import from the main app's build.gradle
+```
+dependencies {
+    ...
+    implementation "dydxprotocol:cartera-android:0.0.1-local-debug"
+}
+```
+
 ## SDK Configuration
 To enable the built-in SDK support, create a configuration object for each of the SDKs as follows:
 ```Kotlin

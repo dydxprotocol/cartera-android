@@ -13,7 +13,8 @@ data class Wallet (
     @SerializedName("mobile"      ) var mobile      : WalletMobile?     = WalletMobile(),
     @SerializedName("desktop"     ) var desktop     : WalletDesktop?    = WalletDesktop(),
     @SerializedName("metadata"    ) var metadata    : WalletMetadata?   = WalletMetadata(),
-    @SerializedName("config"      ) var config      : WalletConfig?     = WalletConfig()
+    @SerializedName("config"      ) var config      : WalletConfig?     = WalletConfig(),
+    @SerializedName("userFields"  ) var userFields  : Map<String, String>? = null
 )
 
 data class WalletApp (

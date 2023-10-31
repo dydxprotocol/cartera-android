@@ -1,0 +1,39 @@
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId LIBRARY_GROUP
+            artifactId LIBRARY_ARTIFACT_ID
+            version LIBRARY_VERSION_NAME
+            artifact sourceJar
+            artifact "$buildDir/outputs/aar/cartera-release.aar"
+
+            pom {
+                withXml {
+                    def dependenciesNode = asNode().appendNode('dependencies')
+
+                    project.configurations.implementation.allDependencies.each {
+                        if (it.group != null || it.name != null || it.version != null || it.name == "unspecified") return
+
+                        def dependencyNode = dependenciesNode.appendNode('dependency')
+                        dependencyNode.appendNode('groupId', it.group)
+                        dependencyNode.appendNode('artifactId', it.name)
+                        dependencyNode.appendNode('version', it.version)
+                    }
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            def github_username = System.getenv('github_username')
+            def github_token = System.getenv('github_token')
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
+            credentials {
+                username github_username
+                password github_token
+            }
+        }
+    }
+}

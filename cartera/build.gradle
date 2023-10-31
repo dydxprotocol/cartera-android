@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
+    id 'maven-publish'
 }
 
 android {
@@ -77,47 +78,13 @@ dependencies {
 }
 
 apply plugin: 'maven-publish'
+
 task sourceJar(type: Jar) {
     from android.sourceSets.main.java.srcDirs
     archiveClassifier.set("sources")
 }
 
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId "dydxprotocol"
-            artifactId "cartera-android"
-            version "0.0.6"
-            artifact sourceJar
-            artifact "$buildDir/outputs/aar/cartera-release.aar"
-
-            pom {
-                withXml {
-                    def dependenciesNode = asNode().appendNode('dependencies')
-
-                    project.configurations.implementation.allDependencies.each {
-                        if (it.group != null || it.name != null || it.version != null || it.name == "unspecified") return
-
-                        def dependencyNode = dependenciesNode.appendNode('dependency')
-                        dependencyNode.appendNode('groupId', it.group)
-                        dependencyNode.appendNode('artifactId', it.name)
-                        dependencyNode.appendNode('version', it.version)
-                    }
-                }
-            }
-        }
-    }
-    
-    repositories {
-        maven {
-            def github_username = System.getenv('github_username')
-            def github_token = System.getenv('github_token')
-            name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
-            credentials {
-                username github_username
-                password github_token
-            }
-        }
-    }
-}
+// !!!! Switch between local and remote publishing here: !!!!
+// IMPORTANT: Be sure to switch back to "publishRemote" before committing.  Otherwise, the deployment will fail.
+//apply from: 'publishLocal.gradle'
+apply from: 'publishRemote.gradle'

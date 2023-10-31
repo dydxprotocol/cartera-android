@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name="exchange.dydx.carteraexample.CarteraSampleApplication"
+        android:name=".CarteraSampleApplication"
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -14,9 +14,15 @@
         tools:targetApi="31" >
 
         <activity
-            android:name="exchange.dydx.carteraexample.MainActivity"
+            android:name=".MainActivity"
             android:launchMode="singleTask"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

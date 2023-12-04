@@ -76,6 +76,15 @@ class CarteraConfig(
        )
     }
 
+    fun updateConfig(walletProvidersConfig: WalletProvidersConfig) {
+        registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
+            provider = WalletConnectV2Provider(walletProvidersConfig.walletConnectV2, application),
+        )
+        registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
+            provider = WalletSegueProvider(walletProvidersConfig.walletSegue, application, launcher),
+        )
+    }
+
     fun registerProvider(
         connectionType: WalletConnectionType,
         provider: WalletOperationProviderProtocol,

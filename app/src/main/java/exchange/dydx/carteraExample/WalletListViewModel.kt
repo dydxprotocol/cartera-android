@@ -1,8 +1,6 @@
 package exchange.dydx.carteraexample
 
 import android.content.Context
-import android.os.Handler
-import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
@@ -183,15 +181,11 @@ class WalletListViewModel(
     }
 
     private fun toastMessage(message: String) {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-        }
+        Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
     private fun toastWalletError(error: WalletError) {
-        Handler(Looper.getMainLooper()).post {
-            Toast.makeText(context, "$error.title: $error.message", Toast.LENGTH_SHORT).show()
-        }
+        Toast.makeText(context, "$error.title: $error.message", Toast.LENGTH_SHORT).show()
     }
 
     private fun message(action: String, chainId: Int): WalletTypedData {

@@ -285,6 +285,7 @@
         {
           "type": "walletConnectV2",
           "native": "tpoutside:",
+          "android": "tp://mytokenpocket.vip",
           "universal": ""
         }
       ]

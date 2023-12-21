@@ -49,21 +49,33 @@ object WalletConnectUtils {
             url = createDeeplink(native, deeplink, encoding)
         }
         if (url == null) {
-            url = URL(deeplink)
+            try {
+                url = URL(deeplink)
+            } catch (e: Exception) {
+                return null
+            }
         }
         return url
     }
 
     private fun createUniversallink(universal: String, deeplink: String, encoding: String?): URL? {
-        val encoded = encodeUri(deeplink, encoding)
-        val link = "$universal/wc?uri=$encoded"
-        return URL(link)
+        try {
+            val encoded = encodeUri(deeplink, encoding)
+            val link = "$universal/wc?uri=$encoded"
+            return URL(link)
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun createDeeplink(native: String, deeplink: String, encoding: String?): URL? {
-        val encoded = encodeUri(deeplink, encoding)
-        val link = "$native//wc?uri=$encoded"
-        return URL(link)
+        try {
+            val encoded = encodeUri(deeplink, encoding)
+            val link = "$native//wc?uri=$encoded"
+            return URL(link)
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     private fun encodeUri(deeplink: String, encoding: String?): String {

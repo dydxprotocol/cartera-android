@@ -35,7 +35,6 @@ import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
 import okhttp3.internal.toHexString
 import org.json.JSONException
@@ -237,42 +236,38 @@ class WalletConnectV2Provider(
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
-        if ( _walletStatus.state == WalletState.CONNECTED_TO_WALLET) {
+        if (_walletStatus.state == WalletState.CONNECTED_TO_WALLET) {
             completion(walletStatus?.connectedWallet, null)
         } else {
             requestingWallet = request
-            CoroutineScope(IO).launch {
-                doConnect(request = request) { pairing, error ->
-                    CoroutineScope(Dispatchers.Main).launch {
-                        if (error != null) {
-                            currentPairing = null
-                            _walletStatus.connectedWallet = null
-                            _walletStatus.connectionDeeplink = null
-                            _walletStatus.state = WalletState.IDLE
-                            walletStatusDelegate?.statusChanged(_walletStatus)
-                            completion(null, error)
-                        } else if (pairing != null) {
-                            currentPairing = pairing
-                            _walletStatus.state = WalletState.CONNECTED_TO_SERVER
-                            if (request.wallet != null) {
-                                _walletStatus.connectedWallet =
-                                    fromPairing(pairing, request.wallet)
-                            }
-                            _walletStatus.connectionDeeplink =
-                                pairing.uri.replace("wc:", "wc://")
-
-                            walletStatusDelegate?.statusChanged(_walletStatus)
-
-                            // let dappDelegate call the completion
-                            connectCompletions.add(completion)
-                        } else {
-                            currentPairing = null
-                            _walletStatus.state = WalletState.IDLE
-                            _walletStatus.connectedWallet = null
-                            walletStatusDelegate?.statusChanged(_walletStatus)
-                            completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED))
-                        }
+            doConnect(request = request) { pairing, error ->
+                if (error != null) {
+                    currentPairing = null
+                    _walletStatus.connectedWallet = null
+                    _walletStatus.connectionDeeplink = null
+                    _walletStatus.state = WalletState.IDLE
+                    walletStatusDelegate?.statusChanged(_walletStatus)
+                    completion(null, error)
+                } else if (pairing != null) {
+                    currentPairing = pairing
+                    _walletStatus.state = WalletState.CONNECTED_TO_SERVER
+                    if (request.wallet != null) {
+                        _walletStatus.connectedWallet =
+                            fromPairing(pairing, request.wallet)
                     }
+                    _walletStatus.connectionDeeplink =
+                        pairing.uri.replace("wc:", "wc://")
+
+                    walletStatusDelegate?.statusChanged(_walletStatus)
+
+                    // let dappDelegate call the completion
+                    connectCompletions.add(completion)
+                } else {
+                    currentPairing = null
+                    _walletStatus.state = WalletState.IDLE
+                    _walletStatus.connectedWallet = null
+                    walletStatusDelegate?.statusChanged(_walletStatus)
+                    completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED))
                 }
             }
         }

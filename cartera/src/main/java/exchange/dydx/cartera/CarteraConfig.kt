@@ -65,24 +65,46 @@ class CarteraConfig(
        registration[WalletConnectionType.WalletConnect] = RegistrationConfig(
            provider = WalletConnectV1Provider()
        )
-       registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
-           provider = WalletConnectV2Provider(walletProvidersConfig.walletConnectV2, application),
-       )
-       registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
-           provider = WalletSegueProvider(walletProvidersConfig.walletSegue, application, launcher),
-       )
+       if (walletProvidersConfig.walletConnectV2 != null) {
+           registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
+               provider = WalletConnectV2Provider(
+                   walletProvidersConfig.walletConnectV2,
+                   application
+               ),
+           )
+       }
+       if (walletProvidersConfig.walletSegue != null) {
+           registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
+               provider = WalletSegueProvider(
+                   walletProvidersConfig.walletSegue,
+                   application,
+                   launcher
+               ),
+           )
+       }
        registration[WalletConnectionType.MagicLink] = RegistrationConfig(
            provider = MagicLinkProvider(),
        )
     }
 
     fun updateConfig(walletProvidersConfig: WalletProvidersConfig) {
-        registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
-            provider = WalletConnectV2Provider(walletProvidersConfig.walletConnectV2, application),
-        )
-        registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
-            provider = WalletSegueProvider(walletProvidersConfig.walletSegue, application, launcher),
-        )
+        if (walletProvidersConfig.walletConnectV2 != null) {
+            registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
+                provider = WalletConnectV2Provider(
+                    walletProvidersConfig.walletConnectV2,
+                    application
+                ),
+            )
+        }
+        if (walletProvidersConfig.walletSegue != null) {
+            registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
+                provider = WalletSegueProvider(
+                    walletProvidersConfig.walletSegue,
+                    application,
+                    launcher
+                ),
+            )
+        }
     }
 
     fun registerProvider(

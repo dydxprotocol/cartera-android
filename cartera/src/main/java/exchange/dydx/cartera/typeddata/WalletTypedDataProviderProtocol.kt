@@ -11,7 +11,6 @@ fun WalletTypedDataProviderProtocol.type(name: String, type: String): Map<String
     return mapOf("name" to name, "type" to type)
 }
 
-
 val WalletTypedDataProviderProtocol.typedDataAsString: String?
     get() {
         typedData()?.let { typedData ->

@@ -36,7 +36,7 @@ class WalletSegueProvider(
     private val walletSegueConfig: WalletSegueConfig?,
     private val application: Application,
     private val launcher: ActivityResultLauncher<Intent>?
-    ): WalletOperationProviderProtocol {
+) : WalletOperationProviderProtocol {
 
     private var _walletStatus = WalletStatusImp()
         set(value) {
@@ -58,7 +58,7 @@ class WalletSegueProvider(
             client = CoinbaseWalletSDK(
                 appContext = application.applicationContext,
                 domain = Uri.parse(walletSegueCallbackUrl),
-                openIntent = { intent -> launcher?.launch(intent) }
+                openIntent = { intent -> launcher?.launch(intent) },
             )
         }
     }
@@ -72,10 +72,9 @@ class WalletSegueProvider(
 
         when (_walletStatus.state) {
             WalletState.IDLE -> {
-
                 val requestAccount = Web3JsonRPC.RequestAccounts().action()
                 client?.initiateHandshake(
-                    initialActions = listOf(requestAccount)
+                    initialActions = listOf(requestAccount),
                 ) { result: Result<List<ActionResult>>, account: Account? ->
                     result.onSuccess { actionResults: List<ActionResult> ->
                         if (account != null) {
@@ -91,8 +90,8 @@ class WalletSegueProvider(
                                     WalletError(
                                         code = CarteraErrorCode.NETWORK_MISMATCH,
                                         title = errorTitle,
-                                        message = errorMessage
-                                    )
+                                        message = errorMessage,
+                                    ),
                                 )
                             } else if (expected.address != null && expected.address?.lowercase() != account.address.lowercase()) {
                                 val errorTitle = "Wallet Mismatch"
@@ -103,20 +102,19 @@ class WalletSegueProvider(
                                     WalletError(
                                         code = CarteraErrorCode.WALLET_MISMATCH,
                                         title = errorTitle,
-                                        message = errorMessage
-                                    )
+                                        message = errorMessage,
+                                    ),
                                 )
                             } else {
                                 this?.account = account
                                 this?._walletStatus?.connectedWallet = WalletInfo(
                                     address = account.address,
                                     chainId = expected.chainId,
-                                    wallet = wallet
+                                    wallet = wallet,
                                 )
                                 this?._walletStatus?.state = WalletState.CONNECTED_TO_WALLET
                                 completion(this?._walletStatus?.connectedWallet, null)
                             }
-
                         } else {
                             completion(null, WalletError(CarteraErrorCode.WALLET_CONTAINS_NO_ACCOUNT, CarteraErrorCode.WALLET_CONTAINS_NO_ACCOUNT.message))
                         }
@@ -127,7 +125,7 @@ class WalletSegueProvider(
                 }
             }
             WalletState.LISTENING -> {
-               Log.e(tag(this@WalletSegueProvider), "Invalid state")
+                Log.e(tag(this@WalletSegueProvider), "Invalid state")
             }
             WalletState.CONNECTED_TO_SERVER -> {
                 completion(_walletStatus.connectedWallet, null)
@@ -181,7 +179,7 @@ class WalletSegueProvider(
                 request.ethereum.maxFeePerGas?.toHexString(),
                 request.ethereum.maxPriorityFeePerGas?.toHexString(),
                 request.ethereum.gasLimit?.toHexString(),
-                request.ethereum.chainId
+                request.ethereum.chainId,
             ).action()
             reallyMakeRequest(sendAction) { result, error ->
                 if (error != null) {
@@ -192,7 +190,7 @@ class WalletSegueProvider(
         } else {
             completion(
                 null,
-                WalletError(CarteraErrorCode.INVALID_INPUT, CarteraErrorCode.INVALID_INPUT.message)
+                WalletError(CarteraErrorCode.INVALID_INPUT, CarteraErrorCode.INVALID_INPUT.message),
             )
         }
     }
@@ -237,11 +235,18 @@ class WalletSegueProvider(
     ) {
         val request = RequestContent.Request(actions = listOf<Action>(action), account = null)
         client?.makeRequest(
-            request = request
+            request = request,
         ) { result: Result<List<ActionResult>> ->
             result.onSuccess { actionResults: List<ActionResult> ->
                 when (val actionResult = actionResults.firstOrNull()) {
-                    is ActionResult.Result -> completion(actionResult.value, null)
+                    is ActionResult.Result -> {
+                        // the hash returned has quotes around it, so we remove them
+                        var value = actionResult.value
+                        if (value.startsWith("\"") && value.endsWith("\"")) {
+                            value = value.substring(1, value.length - 1)
+                        }
+                        completion(value, null)
+                    }
                     is ActionResult.Error -> completion(null, WalletError(CarteraErrorCode.REFUSED_BY_WALLET, actionResult.message))
                     null -> completion(null, WalletError(CarteraErrorCode.REFUSED_BY_WALLET, "No result"))
                 }

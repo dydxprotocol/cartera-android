@@ -30,7 +30,6 @@ object ModalTransitionDialog {
         dismissOnBackPress: Boolean = true,
         content: @Composable (ModalTransitionDialogHelper) -> Unit
     ) {
-
         val onCloseSharedFlow: MutableSharedFlow<Unit> = remember { MutableSharedFlow() }
         val coroutineScope: CoroutineScope = rememberCoroutineScope()
         val animateContentBackTrigger = remember { mutableStateOf(false) }
@@ -38,7 +37,7 @@ object ModalTransitionDialog {
 
         LaunchedEffect(key1 = Unit) {
             launch {
-                //delay(DIALOG_BUILD_TIME)
+                // delay(DIALOG_BUILD_TIME)
                 animateContentBackTrigger.value = true
             }
             launch {
@@ -48,7 +47,7 @@ object ModalTransitionDialog {
 
         Dialog(
             onDismissRequest = { coroutineScope.launch { startDismissWithExitAnimation(animateContentBackTrigger, onDismissRequest) } },
-            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = dismissOnBackPress, dismissOnClickOutside = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false, dismissOnBackPress = dismissOnBackPress, dismissOnClickOutside = false),
         ) {
             LaunchedEffect(key1 = Unit) {
                 if (mutex.isLocked) mutex.unlock()
@@ -96,14 +95,13 @@ object ModalTransitionDialog {
             visible = visible,
             enter = slideInVertically(
                 animationSpec = tween(ANIMATION_TIME.toInt()),
-                initialOffsetY = { fullHeight -> fullHeight }
+                initialOffsetY = { fullHeight -> fullHeight },
             ),
             exit = slideOutVertically(
                 animationSpec = tween(ANIMATION_TIME.toInt()),
-                targetOffsetY = { fullHeight -> fullHeight }
+                targetOffsetY = { fullHeight -> fullHeight },
             ),
-            content = content
+            content = content,
         )
     }
 }
-

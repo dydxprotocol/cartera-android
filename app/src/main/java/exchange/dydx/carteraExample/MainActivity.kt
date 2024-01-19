@@ -10,7 +10,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import exchange.dydx.cartera.CarteraConfig
 
-
 class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -24,7 +23,7 @@ class MainActivity : ComponentActivity() {
         CarteraConfig.shared = CarteraConfig(
             walletProvidersConfig = WalletProvidersConfigUtil.getWalletProvidersConfig(),
             application = applicationContext as Application,
-            launcher = launcher
+            launcher = launcher,
         )
         CarteraConfig.shared?.registerWallets(context = applicationContext)
 
@@ -44,5 +43,3 @@ fun MyApp(content: @Composable () -> Unit) {
         }
     }
 }
-
-

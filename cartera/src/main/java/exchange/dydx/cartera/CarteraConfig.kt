@@ -16,7 +16,6 @@ import exchange.dydx.cartera.walletprovider.providers.WalletConnectV2Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletSegueProvider
 import java.lang.reflect.Type
 
-
 sealed class WalletConnectionType(val rawValue: String) {
     object WalletConnect : WalletConnectionType("walletConnect")
     object WalletConnectV2 : WalletConnectionType("walletConnectV2")
@@ -50,7 +49,6 @@ class CarteraConfig(
             shared?.registration?.get(WalletConnectionType.WalletSegue)?.provider?.let { provider ->
                 val walletSegueProvider = provider as? WalletSegueProvider
                 return walletSegueProvider?.handleResponse(url) ?: false
-
             }
             return false
         }
@@ -61,38 +59,15 @@ class CarteraConfig(
     val wallets: List<Wallet>
         get() = _wallets ?: emptyList()
 
-   init {
-       registration[WalletConnectionType.WalletConnect] = RegistrationConfig(
-           provider = WalletConnectV1Provider()
-       )
-       if (walletProvidersConfig.walletConnectV2 != null) {
-           registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
-               provider = WalletConnectV2Provider(
-                   walletProvidersConfig.walletConnectV2,
-                   application
-               ),
-           )
-       }
-       if (walletProvidersConfig.walletSegue != null) {
-           registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
-               provider = WalletSegueProvider(
-                   walletProvidersConfig.walletSegue,
-                   application,
-                   launcher
-               ),
-           )
-       }
-       registration[WalletConnectionType.MagicLink] = RegistrationConfig(
-           provider = MagicLinkProvider(),
-       )
-    }
-
-    fun updateConfig(walletProvidersConfig: WalletProvidersConfig) {
+    init {
+        registration[WalletConnectionType.WalletConnect] = RegistrationConfig(
+            provider = WalletConnectV1Provider(),
+        )
         if (walletProvidersConfig.walletConnectV2 != null) {
             registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
                 provider = WalletConnectV2Provider(
                     walletProvidersConfig.walletConnectV2,
-                    application
+                    application,
                 ),
             )
         }
@@ -101,7 +76,30 @@ class CarteraConfig(
                 provider = WalletSegueProvider(
                     walletProvidersConfig.walletSegue,
                     application,
-                    launcher
+                    launcher,
+                ),
+            )
+        }
+        registration[WalletConnectionType.MagicLink] = RegistrationConfig(
+            provider = MagicLinkProvider(),
+        )
+    }
+
+    fun updateConfig(walletProvidersConfig: WalletProvidersConfig) {
+        if (walletProvidersConfig.walletConnectV2 != null) {
+            registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
+                provider = WalletConnectV2Provider(
+                    walletProvidersConfig.walletConnectV2,
+                    application,
+                ),
+            )
+        }
+        if (walletProvidersConfig.walletSegue != null) {
+            registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
+                provider = WalletSegueProvider(
+                    walletProvidersConfig.walletSegue,
+                    application,
+                    launcher,
                 ),
             )
         }

@@ -15,16 +15,20 @@ fun Wallet.installed(context: Context): Boolean {
     return false
 }
 
-fun Wallet.openPlayStore(context: Context): Unit {
+fun Wallet.openPlayStore(context: Context) {
     config?.androidPackage?.let { androidPackage ->
         try {
-            startActivity(context,
+            startActivity(
+                context,
                 Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$androidPackage")),
-                null)
+                null,
+            )
         } catch (e: ActivityNotFoundException) {
-            startActivity(context,
+            startActivity(
+                context,
                 Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$androidPackage")),
-                null)
+                null,
+            )
         }
     }
 }

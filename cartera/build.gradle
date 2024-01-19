@@ -61,10 +61,10 @@ dependencies {
     // https://github.com/WalletConnect/WalletConnectKotlinV2
     //
 
-    implementation platform('com.walletconnect:android-bom:1.15.0')
+    implementation platform('com.walletconnect:android-bom:1.18.0')
     implementation('com.walletconnect:android-core')
     implementation 'com.walletconnect:sign'
-    implementation 'com.walletconnect:push'
+    //implementation 'com.walletconnect:push'
 
     //
     // https://docs.cloud.coinbase.com/wallet-sdk/docs/android-install

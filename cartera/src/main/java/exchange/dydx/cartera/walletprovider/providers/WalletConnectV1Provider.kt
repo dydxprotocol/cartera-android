@@ -13,7 +13,7 @@ import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
 import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 
-class WalletConnectV1Provider: WalletOperationProviderProtocol {
+class WalletConnectV1Provider : WalletOperationProviderProtocol {
     private var _walletStatus = WalletStatusImp()
         set(value) {
             field = value

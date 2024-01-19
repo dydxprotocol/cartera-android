@@ -24,7 +24,7 @@ import java.math.BigInteger
 
 class WalletListViewModel(
     private val context: Context
-): ViewModel(), WalletStatusDelegate {
+) : ViewModel(), WalletStatusDelegate {
     var viewState: MutableState<WalletList.WalletListState> =
         mutableStateOf(WalletList.WalletListState(listOf()))
 
@@ -38,7 +38,7 @@ class WalletListViewModel(
         viewModelScope.launch {
             viewState.value = WalletList.WalletListState(
                 wallets = CarteraConfig.shared?.wallets ?: listOf(),
-                walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean  ->
+                walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean ->
                     val chainId: Int = if (useTestnet) 5 else 1
                     when (action) {
                         WalletList.WalletAction.Connect -> {
@@ -69,7 +69,7 @@ class WalletListViewModel(
                             testQRCodeV2(chainId)
                         }
                     }
-                }
+                },
             )
         }
     }
@@ -102,7 +102,8 @@ class WalletListViewModel(
 
     private fun testSignMessage(wallet: Wallet?, chainId: Int) {
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
-        provider.signMessage(request = request,
+        provider.signMessage(
+            request = request,
             message = "Test Message",
             connected = { info ->
                 Log.d(tag(this@WalletListViewModel), "Connected to: ${info?.peerName ?: info?.address}")
@@ -113,7 +114,7 @@ class WalletListViewModel(
                 } else {
                     toastMessage("Signature: $signature")
                 }
-            }
+            },
         )
     }
 
@@ -122,7 +123,8 @@ class WalletListViewModel(
         dydxSign.message = message(action = "Sample Action", chainId = chainId)
 
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
-        provider.sign(request = request,
+        provider.sign(
+            request = request,
             typedDataProvider = dydxSign,
             connected = { info ->
                 toastMessage("Connected to: ${info?.peerName ?: info?.address}")
@@ -133,7 +135,7 @@ class WalletListViewModel(
                 } else {
                     toastMessage("Signature: $signature")
                 }
-            }
+            },
         )
     }
 
@@ -146,18 +148,19 @@ class WalletListViewModel(
                 val ethereumRequest = EthereumTransactionRequest(
                     fromAddress = info?.address ?: "0x00",
                     toAddress = "0x0000000000000000000000000000000000000000",
-                    weiValue =  BigInteger("1"),
+                    weiValue = BigInteger("1"),
                     data = "0x",
                     nonce = null,
                     gasPriceInWei = BigInteger("100000000"),
                     maxFeePerGas = null,
                     maxPriorityFeePerGas = null,
                     gasLimit = BigInteger("21000"),
-                    chainId = chainId.toString()
+                    chainId = chainId.toString(),
                 )
                 val request =
                     WalletTransactionRequest(walletRequest = request, ethereum = ethereumRequest)
-                provider.send(request = request,
+                provider.send(
+                    request = request,
                     connected = { info ->
                         toastMessage("Connected to: ${info?.peerName ?: info?.address}")
                     },
@@ -167,7 +170,7 @@ class WalletListViewModel(
                         } else {
                             toastMessage("Transaction Hash: $txHash")
                         }
-                    }
+                    },
                 )
             }
         }

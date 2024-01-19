@@ -17,10 +17,10 @@ import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import exchange.dydx.cartera.walletprovider.WalletUserConsentStatus
 import exchange.dydx.cartera.walletprovider.userconsent.SkippedWalletUserConsent
 
-class CarteraProvider(private val context: Context): WalletOperationProviderProtocol {
+class CarteraProvider(private val context: Context) : WalletOperationProviderProtocol {
     private var currentRequestHandler: WalletOperationProviderProtocol? = null
 
-    private val debugQrCodeProvider =  CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectV2)
+    private val debugQrCodeProvider = CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectV2)
 
     fun startDebugLink(chainId: Int, completion: WalletConnectCompletion) {
         updateCurrentHandler(WalletRequest(null, null, chainId, context))
@@ -68,9 +68,9 @@ class CarteraProvider(private val context: Context): WalletOperationProviderProt
             when (status) {
                 WalletUserConsentStatus.CONSENTED -> currentRequestHandler?.send(request, connected, completion)
                 WalletUserConsentStatus.REJECTED -> {
-                val error = WalletError(CarteraErrorCode.USER_CANCELED, "User canceled")
-                completion(null, error)
-            }
+                    val error = WalletError(CarteraErrorCode.USER_CANCELED, "User canceled")
+                    completion(null, error)
+                }
             }
         }
     }

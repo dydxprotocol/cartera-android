@@ -98,7 +98,7 @@ object WalletList {
             walletListContent(
                 viewState = state.value,
                 coroutineScope = coroutineScope,
-                bottomSheetState = bottomSheetState
+                bottomSheetState = bottomSheetState,
             )
         }
 
@@ -143,14 +143,14 @@ object WalletList {
                                 } else {
                                     wallet.openPlayStore(context)
                                 }
-                            }
+                            },
                     ) {
                         Text(
                             walletName,
                             modifier = Modifier
                                 .padding(16.dp)
                                 .weight(1f, false),
-                            textAlign = TextAlign.Start
+                            textAlign = TextAlign.Start,
                         )
 
                         val subText: String =
@@ -163,7 +163,7 @@ object WalletList {
                             modifier = Modifier
                                 .padding(14.dp)
                                 .weight(1f, false),
-                            textAlign = TextAlign.End
+                            textAlign = TextAlign.End,
                         )
                     }
                     Divider()
@@ -182,14 +182,14 @@ object WalletList {
                             viewState.debugQRCodeAction?.let {
                                 it(WalletList.QrCodeAction.V2, viewState.useTestnet)
                             }
-                        }
+                        },
                 ) {
                     Text(
                         "Debug QR Code",
                         modifier = Modifier
                             .padding(16.dp)
                             .weight(1f, false),
-                        textAlign = TextAlign.Start
+                        textAlign = TextAlign.Start,
                     )
 
                     Text(
@@ -197,7 +197,7 @@ object WalletList {
                         modifier = Modifier
                             .padding(14.dp)
                             .weight(1f, false),
-                        textAlign = TextAlign.End
+                        textAlign = TextAlign.End,
                     )
                 }
                 Divider()
@@ -207,14 +207,14 @@ object WalletList {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .fillMaxWidth(),
                 ) {
                     Text(
                         "Goerli Testnet:",
                         modifier = Modifier
                             .padding(16.dp)
                             .weight(1f, false),
-                        textAlign = TextAlign.Start
+                        textAlign = TextAlign.Start,
                     )
 
                     Switch(
@@ -223,8 +223,6 @@ object WalletList {
                     )
                 }
             }
-
-
         }
     }
 
@@ -237,21 +235,19 @@ object WalletList {
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        )
-        {
+            modifier = Modifier.fillMaxWidth(),
+        ) {
             Text("Select Wallet Action to Test:", style = MaterialTheme.typography.h5)
             TextButton(
                 onClick = {
                     viewState.walletAction?.invoke(
                         WalletAction.Connect,
                         viewState.selectedWallet,
-                        viewState.useTestnet
+                        viewState.useTestnet,
                     )
                 },
-                modifier = buttonModifier
-            )
-            {
+                modifier = buttonModifier,
+            ) {
                 Text("Connect", style = buttonTextStyle)
             }
             TextButton(
@@ -259,12 +255,11 @@ object WalletList {
                     viewState.walletAction?.invoke(
                         WalletAction.SignMessage,
                         viewState.selectedWallet,
-                        viewState.useTestnet
+                        viewState.useTestnet,
                     )
                 },
-                modifier = buttonModifier
-            )
-            {
+                modifier = buttonModifier,
+            ) {
                 Text("Sign Personal Message", style = buttonTextStyle)
             }
             TextButton(
@@ -272,12 +267,11 @@ object WalletList {
                     viewState.walletAction?.invoke(
                         WalletAction.SignTypedData,
                         viewState.selectedWallet,
-                        viewState.useTestnet
+                        viewState.useTestnet,
                     )
                 },
-                modifier = buttonModifier
-            )
-            {
+                modifier = buttonModifier,
+            ) {
                 Text("Sign TypedData", style = buttonTextStyle)
             }
             TextButton(
@@ -285,22 +279,20 @@ object WalletList {
                     viewState.walletAction?.invoke(
                         WalletAction.SignTransaction,
                         viewState.selectedWallet,
-                        viewState.useTestnet
+                        viewState.useTestnet,
                     )
                 },
-                modifier = buttonModifier
-            )
-            {
+                modifier = buttonModifier,
+            ) {
                 Text("Send Transaction", style = buttonTextStyle)
             }
             Spacer(modifier = Modifier.height(20.dp))
             TextButton(
                 onClick = {
                     viewState.showBottomSheet = false
-                          },
-                modifier = buttonModifier
-            )
-            {
+                },
+                modifier = buttonModifier,
+            ) {
                 Text("Cancel", style = buttonTextStyle)
             }
         }
@@ -315,9 +307,8 @@ object WalletList {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.White)
+                    .background(Color.White),
             ) {
-
                 Spacer(modifier = Modifier.size(32.dp))
 
                 uri?.let {
@@ -333,7 +324,7 @@ object WalletList {
                         modifier = Modifier
                             .padding(16.dp)
                             .fillMaxWidth()
-                            .fillMaxHeight(0.6f)
+                            .fillMaxHeight(0.6f),
                     )
 
                     Text(it, modifier = Modifier.padding(16.dp))
@@ -346,7 +337,7 @@ object WalletList {
                             .fillMaxWidth()
                             .align(Alignment.Center),
                         colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.black)),
-                        onClick = modalTransitionDialogHelper::triggerAnimatedClose
+                        onClick = modalTransitionDialogHelper::triggerAnimatedClose,
                     ) {
                         Text(text = "Close it", color = Color.White)
                     }
@@ -355,4 +346,3 @@ object WalletList {
         }
     }
 }
-

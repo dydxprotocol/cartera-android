@@ -45,7 +45,7 @@ import java.util.concurrent.TimeUnit
 class WalletConnectV2Provider(
     private val walletConnectV2Config: WalletConnectV2Config?,
     private val application: Application
-    ): WalletOperationProviderProtocol {
+) : WalletOperationProviderProtocol {
     private var _walletStatus = WalletStatusImp()
         set(value) {
             field = value
@@ -57,8 +57,8 @@ class WalletConnectV2Provider(
     override var walletStatusDelegate: WalletStatusDelegate? = null
     override var userConsentDelegate: WalletUserConsentProtocol? = null
 
-    private var connectCompletions : MutableList<WalletConnectCompletion> = mutableListOf()
-    private var operationCompletions: MutableMap<String, WalletOperationCompletion>  = mutableMapOf()
+    private var connectCompletions: MutableList<WalletConnectCompletion> = mutableListOf()
+    private var operationCompletions: MutableMap<String, WalletOperationCompletion> = mutableMapOf()
 
     private var requestingWallet: WalletRequest? = null
     private var currentSession: Sign.Model.ApprovedSession? = null
@@ -73,14 +73,15 @@ class WalletConnectV2Provider(
             CoroutineScope(Dispatchers.Main).launch {
                 if (requestingWallet?.chainId != null &&
                     approvedSession.chainId() != null &&
-                    requestingWallet?.chainId != approvedSession.chainId()) {
+                    requestingWallet?.chainId != approvedSession.chainId()
+                ) {
                     for (connectCompletion in connectCompletions) {
                         connectCompletion.invoke(
                             null,
                             WalletError(
                                 code = CarteraErrorCode.WALLET_MISMATCH,
-                                message = CarteraErrorCode.WALLET_MISMATCH.message
-                            )
+                                message = CarteraErrorCode.WALLET_MISMATCH.message,
+                            ),
                         )
                     }
                     connectCompletions.clear()
@@ -95,7 +96,7 @@ class WalletConnectV2Provider(
                 for (connectCompletion in connectCompletions) {
                     connectCompletion.invoke(
                         _walletStatus.connectedWallet,
-                        null
+                        null,
                     )
                 }
                 connectCompletions.clear()
@@ -119,8 +120,8 @@ class WalletConnectV2Provider(
                         null,
                         WalletError(
                             code = CarteraErrorCode.REFUSED_BY_WALLET,
-                            message = rejectedSession.reason
-                        )
+                            message = rejectedSession.reason,
+                        ),
                     )
                 }
                 connectCompletions.clear()
@@ -166,7 +167,7 @@ class WalletConnectV2Provider(
                                 response.result as Sign.Model.JsonRpcResponse.JsonRpcResult
                             completion.invoke(
                                 result.result,
-                                null
+                                null,
                             )
                         }
 
@@ -177,8 +178,8 @@ class WalletConnectV2Provider(
                                 null,
                                 WalletError(
                                     code = CarteraErrorCode.UNEXPECTED_RESPONSE,
-                                    message = error.message
-                                )
+                                    message = error.message,
+                                ),
                             )
                         }
                     }
@@ -189,7 +190,7 @@ class WalletConnectV2Provider(
         }
 
         override fun onConnectionStateChange(state: Sign.Model.ConnectionState) {
-            //Triggered whenever the connection state is changed
+            // Triggered whenever the connection state is changed
             Log.d(tag(this@WalletConnectV2Provider), "onConnectionStateChange: $state")
         }
 
@@ -201,43 +202,43 @@ class WalletConnectV2Provider(
     }
 
     init {
-         walletConnectV2Config?.let { walletConnectV2Config ->
-             // Reference: https://docs.walletconnect.com/2.0/android/sign/dapp-usage
-             val projectId = walletConnectV2Config.projectId
-             val relayUrl = "relay.walletconnect.com"
-             val serverUrl = "wss://$relayUrl?projectId=$projectId"
-             val connectionType = ConnectionType.AUTOMATIC // or ConnectionType.MANUAL
+        walletConnectV2Config?.let { walletConnectV2Config ->
+            // Reference: https://docs.walletconnect.com/2.0/android/sign/dapp-usage
+            val projectId = walletConnectV2Config.projectId
+            val relayUrl = "relay.walletconnect.com"
+            val serverUrl = "wss://$relayUrl?projectId=$projectId"
+            val connectionType = ConnectionType.AUTOMATIC // or ConnectionType.MANUAL
 
-             val metadata = Core.Model.AppMetaData(
-                 name = walletConnectV2Config.clientName,
-                 description = walletConnectV2Config.clientDescription,
-                 url = walletConnectV2Config.clientUrl,
-                 icons = walletConnectV2Config.iconUrls,
-                 redirect = "exchange.dydx.carteraexample"
-             )
+            val metadata = Core.Model.AppMetaData(
+                name = walletConnectV2Config.clientName,
+                description = walletConnectV2Config.clientDescription,
+                url = walletConnectV2Config.clientUrl,
+                icons = walletConnectV2Config.iconUrls,
+                redirect = "exchange.dydx.carteraexample",
+            )
 
-             CoreClient.initialize(
-                 metaData = metadata,
-                 relayServerUrl = serverUrl,
-                 connectionType = connectionType,
-                 application = application,
-                 onError = { error ->
-                     Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
-                 }
-             )
+            CoreClient.initialize(
+                metaData = metadata,
+                relayServerUrl = serverUrl,
+                connectionType = connectionType,
+                application = application,
+                onError = { error ->
+                    Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
+                },
+            )
 
-             val init = Sign.Params.Init(core = CoreClient)
+            val init = Sign.Params.Init(core = CoreClient)
 
-             SignClient.initialize(init) { error ->
-                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
-             }
+            SignClient.initialize(init) { error ->
+                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
+            }
 
-             SignClient.setDappDelegate(dappDelegate)
-         }
+            SignClient.setDappDelegate(dappDelegate)
+        }
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
-        if ( _walletStatus.state == WalletState.CONNECTED_TO_WALLET) {
+        if (_walletStatus.state == WalletState.CONNECTED_TO_WALLET) {
             completion(walletStatus?.connectedWallet, null)
         } else {
             requestingWallet = request
@@ -279,7 +280,8 @@ class WalletConnectV2Provider(
     }
 
     override fun disconnect() {
-        currentPairing?.let { it
+        currentPairing?.let {
+            it
             CoreClient.Pairing.disconnect(Core.Params.Disconnect(it.topic)) { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
@@ -305,12 +307,12 @@ class WalletConnectV2Provider(
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
-            return if (sessionTopic!= null && account != null && namespace != null && chainId != null) {
+            return if (sessionTopic != null && account != null && namespace != null && chainId != null) {
                 return Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "personal_sign",
                     params = "[\"${message}\", \"${account}\"]",
-                    chainId = "${namespace}:${chainId}"
+                    chainId = "$namespace:$chainId",
                 )
             } else {
                 return null
@@ -338,7 +340,7 @@ class WalletConnectV2Provider(
                     sessionTopic = sessionTopic,
                     method = "eth_signTypedData",
                     params = "[\"${account}\", \"${message}\"]",
-                    chainId = "${namespace}:${chainId}"
+                    chainId = "$namespace:$chainId",
                 )
             } else {
                 null
@@ -359,12 +361,12 @@ class WalletConnectV2Provider(
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
             val message = request.ethereum?.toJsonRequest()
-            return if (sessionTopic!= null && account != null && namespace != null && chainId != null && message != null) {
+            return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
                 Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "eth_sendTransaction",
-                    params = "[${message}]",
-                    chainId = "${namespace}:${chainId}"
+                    params = "[$message]",
+                    chainId = "$namespace:$chainId",
                 )
             } else {
                 null
@@ -385,7 +387,7 @@ class WalletConnectV2Provider(
 
     private fun doConnect(request: WalletRequest, completion: (pairing: Core.Model.Pairing?, error: WalletError?) -> Unit) {
         val namespace: String = "eip155" /*Namespace identifier, see for reference: https://github.com/ChainAgnostic/CAIPs/blob/master/CAIPs/caip-2.md#syntax*/
-        val chain: String =  if (request.chainId != null) {
+        val chain: String = if (request.chainId != null) {
             "eip155:${request.chainId}"
         } else {
             "eip155:5"
@@ -395,11 +397,11 @@ class WalletConnectV2Provider(
             "personal_sign",
             "eth_sendTransaction",
             "eth_signTypedData",
-         //   "wallet_addEthereumChain"
+            //   "wallet_addEthereumChain"
         )
-        val events: List<String> =  listOf(
+        val events: List<String> = listOf(
             "accountsChanged",
-            "chainChanged"
+            "chainChanged",
         )
         val proposal = Sign.Model.Namespace.Proposal(chains, methods, events)
         val requiredNamespaces: Map<String, Sign.Model.Namespace.Proposal> = mapOf(namespace to proposal) /*Required namespaces to setup a session*/
@@ -426,7 +428,7 @@ class WalletConnectV2Provider(
                     namespaces = requiredNamespaces,
                     optionalNamespaces = optionalNamespaces,
                     properties = properties,
-                    pairing = pairing
+                    pairing = pairing,
                 )
 
             SignClient.connect(
@@ -439,9 +441,9 @@ class WalletConnectV2Provider(
                     Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
                     completion(
                         null,
-                        WalletError(CarteraErrorCode.CONNECTION_FAILED, "SignClient.connect error", error.throwable.stackTraceToString())
+                        WalletError(CarteraErrorCode.CONNECTION_FAILED, "SignClient.connect error", error.throwable.stackTraceToString()),
                     )
-                }
+                },
             )
             openPeerDeeplink(request, pairing)
         }
@@ -480,7 +482,7 @@ class WalletConnectV2Provider(
         requestParams: Sign.Params.Request,
         completion: WalletOperationCompletion
     ) {
-         SignClient.request(
+        SignClient.request(
             request = requestParams,
             onSuccess = { request: Sign.Model.SentRequest ->
                 Log.d(tag(this@WalletConnectV2Provider), "Wallet request made.")
@@ -493,10 +495,10 @@ class WalletConnectV2Provider(
                     WalletError(
                         CarteraErrorCode.CONNECTION_FAILED,
                         "SignClient.request error",
-                        error.throwable.stackTraceToString()
-                    )
+                        error.throwable.stackTraceToString(),
+                    ),
                 )
-            }
+            },
         )
 
         openPeerDeeplink(request, currentPairing)
@@ -507,8 +509,8 @@ class WalletConnectV2Provider(
             address = "address",
             chainId = 0,
             wallet = wallet,
-            peerName =  pairing.peerAppMetaData?.name,
-            peerImageUrl = pairing.peerAppMetaData?.icons?.firstOrNull()
+            peerName = pairing.peerAppMetaData?.name,
+            peerImageUrl = pairing.peerAppMetaData?.icons?.firstOrNull(),
         )
     }
 
@@ -517,8 +519,8 @@ class WalletConnectV2Provider(
             address = session.account(),
             chainId = session.chainId(),
             wallet = wallet,
-            peerName =  session.metaData?.name,
-            peerImageUrl = session.metaData?.icons?.firstOrNull()
+            peerName = session.metaData?.name,
+            peerImageUrl = session.metaData?.icons?.firstOrNull(),
         )
     }
 
@@ -536,7 +538,7 @@ class WalletConnectV2Provider(
             wallet = request.wallet,
             deeplink = pairing?.uri,
             type = WalletConnectionType.WalletConnectV2,
-            context = request.context
+            context = request.context,
         )
         val deeplinkPairingUri = url?.toURI()?.toString()
         if (deeplinkPairingUri != null) {

@@ -13,7 +13,7 @@ object WalletProvidersConfigUtil {
             "https://media.dydx.exchange/logos/dydx-x.png",
             "dydx:",
             "https://trade.dydx.exchange/",
-            "wss://api.stage.dydx.exchange/wc/"
+            "wss://api.stage.dydx.exchange/wc/",
         )
 
         val walletConnectV2Config = WalletConnectV2Config(
@@ -25,13 +25,13 @@ object WalletProvidersConfigUtil {
         )
 
         val walletSegueConfig = WalletSegueConfig(
-            "https://trade.stage.dydx.exchange/walletsegueCarteraExample"
+            "https://trade.stage.dydx.exchange/walletsegueCarteraExample",
         )
 
         return WalletProvidersConfig(
             walletConnectV1Config,
             walletConnectV2Config,
-            walletSegueConfig
+            walletSegueConfig,
         )
     }
 }

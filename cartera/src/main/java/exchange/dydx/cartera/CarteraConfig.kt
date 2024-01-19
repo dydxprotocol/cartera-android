@@ -138,7 +138,7 @@ class CarteraConfig(
 
     private fun registerWalletsInternal(walletConfigJsonData: String): List<Wallet>? {
         val gson = Gson()
-        val walletListType: Type = object : TypeToken<ArrayList<Wallet?>?>() {}.type
+        val walletListType: Type = object : TypeToken<List<Wallet?>?>() {}.type
         return gson.fromJson(walletConfigJsonData, walletListType)
     }
 

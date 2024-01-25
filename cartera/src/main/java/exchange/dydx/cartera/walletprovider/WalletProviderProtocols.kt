@@ -8,7 +8,7 @@ import java.math.BigInteger
 data class WalletRequest(
     val wallet: Wallet? = null,
     val address: String? = null,
-    val chainId: Int? = null,
+    val chainId: String? = null,
     val context: Context
 )
 

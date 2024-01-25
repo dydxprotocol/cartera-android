@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import exchange.dydx.cartera.CarteraConfig
+import exchange.dydx.cartera.CarteraConstants
 import exchange.dydx.cartera.CarteraProvider
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.tag
@@ -39,7 +40,7 @@ class WalletListViewModel(
             viewState.value = WalletList.WalletListState(
                 wallets = CarteraConfig.shared?.wallets ?: listOf(),
                 walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean ->
-                    val chainId: Int = if (useTestnet) 5 else 1
+                    val chainId: String = if (useTestnet) CarteraConstants.testnetChainId else "1"
                     when (action) {
                         WalletList.WalletAction.Connect -> {
                             testConnect(wallet, chainId)
@@ -59,7 +60,7 @@ class WalletListViewModel(
                     }
                 },
                 debugQRCodeAction = { action: WalletList.QrCodeAction, useTestnet: Boolean ->
-                    val chainId: Int = if (useTestnet) 5 else 1
+                    val chainId: String = if (useTestnet) CarteraConstants.testnetChainId else "1"
                     when (action) {
                         WalletList.QrCodeAction.V1 -> {
                             // TODO: testQRCodeV1()
@@ -74,7 +75,7 @@ class WalletListViewModel(
         }
     }
 
-    private fun testQRCodeV2(chainId: Int) {
+    private fun testQRCodeV2(chainId: String) {
         viewState.value.showingQrCodeState = true
         viewState.value.showBottomSheet = false
         viewState.value.selectedWallet = null
@@ -89,7 +90,7 @@ class WalletListViewModel(
         }
     }
 
-    private fun testConnect(wallet: Wallet?, chainId: Int) {
+    private fun testConnect(wallet: Wallet?, chainId: String) {
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
         provider.connect(request) { info, error ->
             if (error != null) {
@@ -100,7 +101,7 @@ class WalletListViewModel(
         }
     }
 
-    private fun testSignMessage(wallet: Wallet?, chainId: Int) {
+    private fun testSignMessage(wallet: Wallet?, chainId: String) {
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
         provider.signMessage(
             request = request,
@@ -118,9 +119,9 @@ class WalletListViewModel(
         )
     }
 
-    private fun testSignTypedData(wallet: Wallet?, chainId: Int) {
-        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = chainId)
-        dydxSign.message = message(action = "Sample Action", chainId = chainId)
+    private fun testSignTypedData(wallet: Wallet?, chainId: String) {
+        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId =  chainId.toInt())
+        dydxSign.message = message(action = "Sample Action", chainId = chainId.toInt())
 
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
         provider.sign(
@@ -139,7 +140,7 @@ class WalletListViewModel(
         )
     }
 
-    private fun testSendTransaction(wallet: Wallet?, chainId: Int) {
+    private fun testSendTransaction(wallet: Wallet?, chainId: String) {
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
         provider.connect(request) { info, error ->
             if (error != null) {

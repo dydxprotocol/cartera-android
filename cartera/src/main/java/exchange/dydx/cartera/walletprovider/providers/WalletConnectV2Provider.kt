@@ -73,7 +73,7 @@ class WalletConnectV2Provider(
             CoroutineScope(Dispatchers.Main).launch {
                 if (requestingWallet?.chainId != null &&
                     approvedSession.chainId() != null &&
-                    requestingWallet?.chainId != approvedSession.chainId()
+                    requestingWallet?.chainId != approvedSession.chainId().toString()
                 ) {
                     for (connectCompletion in connectCompletions) {
                         connectCompletion.invoke(
@@ -507,7 +507,7 @@ class WalletConnectV2Provider(
     private fun fromPairing(pairing: Core.Model.Pairing, wallet: Wallet): WalletInfo {
         return WalletInfo(
             address = "address",
-            chainId = 0,
+            chainId = "0",
             wallet = wallet,
             peerName = pairing.peerAppMetaData?.name,
             peerImageUrl = pairing.peerAppMetaData?.icons?.firstOrNull(),
@@ -517,7 +517,7 @@ class WalletConnectV2Provider(
     private fun fromApprovedSession(session: Sign.Model.ApprovedSession, wallet: Wallet?): WalletInfo {
         return WalletInfo(
             address = session.account(),
-            chainId = session.chainId(),
+            chainId = session.chainId().toString(),
             wallet = wallet,
             peerName = session.metaData?.name,
             peerImageUrl = session.metaData?.icons?.firstOrNull(),

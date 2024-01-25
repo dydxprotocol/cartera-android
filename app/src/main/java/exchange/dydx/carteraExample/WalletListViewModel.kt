@@ -120,7 +120,7 @@ class WalletListViewModel(
     }
 
     private fun testSignTypedData(wallet: Wallet?, chainId: String) {
-        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId =  chainId.toInt())
+        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = chainId.toInt())
         dydxSign.message = message(action = "Sample Action", chainId = chainId.toInt())
 
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)

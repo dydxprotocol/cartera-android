@@ -11,6 +11,7 @@ import com.coinbase.android.nativesdk.message.request.Action
 import com.coinbase.android.nativesdk.message.request.RequestContent
 import com.coinbase.android.nativesdk.message.request.Web3JsonRPC
 import com.coinbase.android.nativesdk.message.response.ActionResult
+import exchange.dydx.cartera.CarteraConstants
 import exchange.dydx.cartera.CarteraErrorCode
 import exchange.dydx.cartera.WalletSegueConfig
 import exchange.dydx.cartera.tag
@@ -78,12 +79,12 @@ class WalletSegueProvider(
                 ) { result: Result<List<ActionResult>>, account: Account? ->
                     result.onSuccess { actionResults: List<ActionResult> ->
                         if (account != null) {
-                            if (expected.chainId != null && account.networkId.toInt() != expected.chainId) {
+                            if (expected.chainId != null && account.networkId.toString() != expected.chainId) {
                                 val errorTitle = "Network Mismatch"
-                                val errorMessage = if (expected.chainId == 1) {
+                                val errorMessage = if (expected.chainId == "1") {
                                     "Set your wallet network to 'Ethereum Mainnet'."
                                 } else {
-                                    "Set your wallet network to 'Goerli Test Network'."
+                                    "Set your wallet network to '${CarteraConstants.testnetName} Test Network'."
                                 }
                                 completion(
                                     null,

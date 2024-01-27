@@ -4,7 +4,7 @@ import exchange.dydx.cartera.entities.Wallet
 
 data class WalletInfo(
     val address: String? = null,
-    val chainId: Int? = null,
+    val chainId: String? = null,
     val wallet: Wallet? = null,
     val peerName: String? = null,
     val peerImageUrl: String? = null

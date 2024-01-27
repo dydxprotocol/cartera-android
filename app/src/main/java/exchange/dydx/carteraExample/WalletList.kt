@@ -210,7 +210,7 @@ object WalletList {
                         .fillMaxWidth(),
                 ) {
                     Text(
-                        "Goerli Testnet:",
+                        "Testnet:",
                         modifier = Modifier
                             .padding(16.dp)
                             .weight(1f, false),

@@ -22,7 +22,7 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
 
     private val debugQrCodeProvider = CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectV2)
 
-    fun startDebugLink(chainId: Int, completion: WalletConnectCompletion) {
+    fun startDebugLink(chainId: String, completion: WalletConnectCompletion) {
         updateCurrentHandler(WalletRequest(null, null, chainId, context))
         currentRequestHandler?.connect(WalletRequest(null, null, chainId, context), completion)
     }

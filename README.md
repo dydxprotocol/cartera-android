@@ -1,4 +1,13 @@
-# cartera-android
+
+<h1 align="center">Cartera-Android</h1>
+
+<div align="center">
+  <a href='https://github.com/dydxprotocol/cartera-android/blob/main/LICENSE'>
+    <img src='https://img.shields.io/badge/License-AGPL_v3-blue.svg' alt='License' />
+  </a>
+</div>
+
+
 Cartera is a mobile web3 wallet integrator. It acts as an abtraction layer over various wallet SDKs to provide a shared interface for common wallet operations. Cartera has the built-in support of the following SDKs:
 
 WalletConnect V1

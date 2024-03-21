@@ -199,6 +199,14 @@ class WalletConnectV2Provider(
 
             Log.d(tag(this@WalletConnectV2Provider), "onError: $error")
         }
+
+        override fun onProposalExpired(proposal: Sign.Model.ExpiredProposal) {
+            Log.d(tag(this@WalletConnectV2Provider), "onProposalExpired: $proposal")
+        }
+
+        override fun onRequestExpired(request: Sign.Model.ExpiredRequest) {
+            Log.d(tag(this@WalletConnectV2Provider), "onRequestExpired: $request")
+        }
     }
 
     init {
@@ -433,11 +441,11 @@ class WalletConnectV2Provider(
 
             SignClient.connect(
                 connect = connectParams,
-                onSuccess = {
-                    Log.d(tag(this@WalletConnectV2Provider), "Connected to wallet")
+                onSuccess = { value ->
+                    Log.d(tag(this@WalletConnectV2Provider), "Connected to wallet: $value")
                     completion(pairing, null)
                 },
-                onError = { error ->
+                onError = { error: Sign.Model.Error ->
                     Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
                     completion(
                         null,

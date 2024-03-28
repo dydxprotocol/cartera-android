@@ -65,6 +65,10 @@ class WalletConnectV2Provider(
 
     private var currentPairing: Core.Model.Pairing? = null
 
+    // expiry must be between current timestamp + MIN_INTERVAL and current timestamp + MAX_INTERVAL (MIN_INTERVAL: 300, MAX_INTERVAL: 604800)
+    private val requestExpiry: Long
+        get() = (System.currentTimeMillis() / 1000) + 400
+
     private val dappDelegate = object : SignClient.DappDelegate {
         override fun onSessionApproved(approvedSession: Sign.Model.ApprovedSession) {
             // Triggered when Dapp receives the session approval from wallet
@@ -315,14 +319,15 @@ class WalletConnectV2Provider(
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
             return if (sessionTopic != null && account != null && namespace != null && chainId != null) {
-                return Sign.Params.Request(
+                Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "personal_sign",
                     params = "[\"${message}\", \"${account}\"]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
-                return null
+                null
             }
         }
 
@@ -348,6 +353,7 @@ class WalletConnectV2Provider(
                     method = "eth_signTypedData",
                     params = "[\"${account}\", \"${message}\"]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
                 null
@@ -374,6 +380,7 @@ class WalletConnectV2Provider(
                     method = "eth_sendTransaction",
                     params = "[$message]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
                 null
@@ -471,13 +478,19 @@ class WalletConnectV2Provider(
                 val params = requestParams()
                 if (params != null) {
                     reallyMakeRequest(request, params) { result, error ->
-                        completion(result, error)
+                        CoroutineScope(Dispatchers.Main).launch {
+                            completion(result, error)
+                        }
                     }
                 } else {
-                    completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                    CoroutineScope(Dispatchers.Main).launch {
+                        completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                    }
                 }
             } else {
-                completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                CoroutineScope(Dispatchers.Main).launch {
+                    completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                }
             }
         }
     }

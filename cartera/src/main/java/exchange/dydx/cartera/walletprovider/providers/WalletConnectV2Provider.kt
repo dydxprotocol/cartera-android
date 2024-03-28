@@ -289,7 +289,6 @@ class WalletConnectV2Provider(
 
     override fun disconnect() {
         currentPairing?.let {
-            it
             CoreClient.Pairing.disconnect(Core.Params.Disconnect(it.topic)) { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
@@ -414,18 +413,16 @@ class WalletConnectV2Provider(
         val proposal = Sign.Model.Namespace.Proposal(chains, methods, events)
         val requiredNamespaces: Map<String, Sign.Model.Namespace.Proposal> = mapOf(namespace to proposal) /*Required namespaces to setup a session*/
         val optionalNamespaces: Map<String, Sign.Model.Namespace.Proposal> = emptyMap() /*Optional namespaces to setup a session*/
-//
-//        val pairing: Core.Model.Pairing?
-//        val pairings = CoreClient.Pairing.getPairings()
-//        if (pairings.isNotEmpty()) {
-//            pairing = pairings.first()
-//        } else {
-//            pairing = CoreClient.Pairing.create() { error ->
-//                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
-//            }!!
-//        }
 
-        val pairing = CoreClient.Pairing.create()
+        val pairing: Core.Model.Pairing?
+        val pairings = CoreClient.Pairing.getPairings()
+        if (pairings.isNotEmpty()) {
+            pairing = pairings.first()
+        } else {
+            pairing = CoreClient.Pairing.create() { error ->
+                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
+            }
+        }
 
         val expiry = (System.currentTimeMillis() / 1000) + TimeUnit.SECONDS.convert(7, TimeUnit.DAYS)
         val properties: Map<String, String> = mapOf("sessionExpiry" to "$expiry")

@@ -61,7 +61,7 @@ dependencies {
     // https://github.com/WalletConnect/WalletConnectKotlinV2
     //
 
-    implementation platform('com.walletconnect:android-bom:1.23.0')
+    implementation platform('com.walletconnect:android-bom:1.31.0')
     implementation('com.walletconnect:android-core')
     implementation 'com.walletconnect:sign'
     //implementation 'com.walletconnect:push'

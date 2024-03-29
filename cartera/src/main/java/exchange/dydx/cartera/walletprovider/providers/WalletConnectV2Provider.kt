@@ -65,6 +65,10 @@ class WalletConnectV2Provider(
 
     private var currentPairing: Core.Model.Pairing? = null
 
+    // expiry must be between current timestamp + MIN_INTERVAL and current timestamp + MAX_INTERVAL (MIN_INTERVAL: 300, MAX_INTERVAL: 604800)
+    private val requestExpiry: Long
+        get() = (System.currentTimeMillis() / 1000) + 400
+
     private val dappDelegate = object : SignClient.DappDelegate {
         override fun onSessionApproved(approvedSession: Sign.Model.ApprovedSession) {
             // Triggered when Dapp receives the session approval from wallet
@@ -289,7 +293,6 @@ class WalletConnectV2Provider(
 
     override fun disconnect() {
         currentPairing?.let {
-            it
             CoreClient.Pairing.disconnect(Core.Params.Disconnect(it.topic)) { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
@@ -316,14 +319,15 @@ class WalletConnectV2Provider(
             val namespace = currentSession?.namespace()
             val chainId = currentSession?.chainId()
             return if (sessionTopic != null && account != null && namespace != null && chainId != null) {
-                return Sign.Params.Request(
+                Sign.Params.Request(
                     sessionTopic = sessionTopic,
                     method = "personal_sign",
                     params = "[\"${message}\", \"${account}\"]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
-                return null
+                null
             }
         }
 
@@ -349,6 +353,7 @@ class WalletConnectV2Provider(
                     method = "eth_signTypedData",
                     params = "[\"${account}\", \"${message}\"]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
                 null
@@ -375,6 +380,7 @@ class WalletConnectV2Provider(
                     method = "eth_sendTransaction",
                     params = "[$message]",
                     chainId = "$namespace:$chainId",
+                    expiry = requestExpiry,
                 )
             } else {
                 null
@@ -414,18 +420,16 @@ class WalletConnectV2Provider(
         val proposal = Sign.Model.Namespace.Proposal(chains, methods, events)
         val requiredNamespaces: Map<String, Sign.Model.Namespace.Proposal> = mapOf(namespace to proposal) /*Required namespaces to setup a session*/
         val optionalNamespaces: Map<String, Sign.Model.Namespace.Proposal> = emptyMap() /*Optional namespaces to setup a session*/
-//
-//        val pairing: Core.Model.Pairing?
-//        val pairings = CoreClient.Pairing.getPairings()
-//        if (pairings.isNotEmpty()) {
-//            pairing = pairings.first()
-//        } else {
-//            pairing = CoreClient.Pairing.create() { error ->
-//                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
-//            }!!
-//        }
 
-        val pairing = CoreClient.Pairing.create()
+        val pairing: Core.Model.Pairing?
+        val pairings = CoreClient.Pairing.getPairings()
+        if (pairings.isNotEmpty()) {
+            pairing = pairings.first()
+        } else {
+            pairing = CoreClient.Pairing.create() { error ->
+                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
+            }
+        }
 
         val expiry = (System.currentTimeMillis() / 1000) + TimeUnit.SECONDS.convert(7, TimeUnit.DAYS)
         val properties: Map<String, String> = mapOf("sessionExpiry" to "$expiry")
@@ -473,14 +477,20 @@ class WalletConnectV2Provider(
 
                 val params = requestParams()
                 if (params != null) {
-                    reallyMakeRequest(request, params) { result, error ->
-                        completion(result, error)
+                    reallyMakeRequest(request, params) { result, requestError ->
+                        CoroutineScope(Dispatchers.Main).launch {
+                            completion(result, requestError)
+                        }
                     }
                 } else {
-                    completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                    CoroutineScope(Dispatchers.Main).launch {
+                        completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                    }
                 }
             } else {
-                completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                CoroutineScope(Dispatchers.Main).launch {
+                    completion(null, WalletError(CarteraErrorCode.INVALID_SESSION))
+                }
             }
         }
     }
@@ -492,9 +502,9 @@ class WalletConnectV2Provider(
     ) {
         SignClient.request(
             request = requestParams,
-            onSuccess = { request: Sign.Model.SentRequest ->
+            onSuccess = { sendRequest: Sign.Model.SentRequest ->
                 Log.d(tag(this@WalletConnectV2Provider), "Wallet request made.")
-                operationCompletions[request.sessionTopic] = completion
+                operationCompletions[sendRequest.sessionTopic] = completion
             },
             onError = { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
@@ -537,14 +547,14 @@ class WalletConnectV2Provider(
             Log.d(tag(this@WalletConnectV2Provider), "Wallet is null")
             return
         }
-        if (pairing?.uri == null) {
+        if (pairing == null) {
             Log.d(tag(this@WalletConnectV2Provider), "Pairing is null")
             return
         }
         // val deeplinkPairingUri = it.replace("wc:", "wc://")
         val url = WalletConnectUtils.createUrl(
             wallet = request.wallet,
-            deeplink = pairing?.uri,
+            deeplink = pairing.uri,
             type = WalletConnectionType.WalletConnectV2,
             context = request.context,
         )
@@ -606,7 +616,7 @@ private fun EthereumTransactionRequest.toJsonRequest(): String? {
     val filtered = request.filterValues { it != null }
 
     return try {
-        JSONObject(filtered as Map<*, *>?).toString()
+        JSONObject(filtered).toString()
     } catch (e: JSONException) {
         null
     }

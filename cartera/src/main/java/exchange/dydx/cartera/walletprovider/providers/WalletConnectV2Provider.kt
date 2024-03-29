@@ -477,9 +477,9 @@ class WalletConnectV2Provider(
 
                 val params = requestParams()
                 if (params != null) {
-                    reallyMakeRequest(request, params) { result, error ->
+                    reallyMakeRequest(request, params) { result, requestError ->
                         CoroutineScope(Dispatchers.Main).launch {
-                            completion(result, error)
+                            completion(result, requestError)
                         }
                     }
                 } else {
@@ -502,9 +502,9 @@ class WalletConnectV2Provider(
     ) {
         SignClient.request(
             request = requestParams,
-            onSuccess = { request: Sign.Model.SentRequest ->
+            onSuccess = { sendRequest: Sign.Model.SentRequest ->
                 Log.d(tag(this@WalletConnectV2Provider), "Wallet request made.")
-                operationCompletions[request.sessionTopic] = completion
+                operationCompletions[sendRequest.sessionTopic] = completion
             },
             onError = { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
@@ -547,14 +547,14 @@ class WalletConnectV2Provider(
             Log.d(tag(this@WalletConnectV2Provider), "Wallet is null")
             return
         }
-        if (pairing?.uri == null) {
+        if (pairing == null) {
             Log.d(tag(this@WalletConnectV2Provider), "Pairing is null")
             return
         }
         // val deeplinkPairingUri = it.replace("wc:", "wc://")
         val url = WalletConnectUtils.createUrl(
             wallet = request.wallet,
-            deeplink = pairing?.uri,
+            deeplink = pairing.uri,
             type = WalletConnectionType.WalletConnectV2,
             context = request.context,
         )
@@ -616,7 +616,7 @@ private fun EthereumTransactionRequest.toJsonRequest(): String? {
     val filtered = request.filterValues { it != null }
 
     return try {
-        JSONObject(filtered as Map<*, *>?).toString()
+        JSONObject(filtered).toString()
     } catch (e: JSONException) {
         null
     }

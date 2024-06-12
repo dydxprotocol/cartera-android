@@ -3,7 +3,7 @@ project.afterEvaluate {
     publishToMavenLocal { 
         def groupId = LIBRARY_GROUP 
         def artifactId = LIBRARY_ARTIFACT_ID 
-        def versionName = LIBRARY_VERSION_NAME + "-local" 
+        def versionName = LIBRARY_VERSION_NAME
         def debugSuffix = "-debug" 
         def releaseSuffix = "-release" 
         publishing { 
@@ -13,14 +13,14 @@ project.afterEvaluate {
                 //    artifact(sourceJar)
                     setGroupId groupId 
                     setArtifactId artifactId 
-                    version versionName + releaseSuffix 
+                    version versionName //  + releaseSuffix 
                 } 
                 LibraryDebug(MavenPublication) { 
                     from components.debug 
                 //    artifact(sourceJar)
                     setGroupId groupId 
                     setArtifactId artifactId 
-                    version versionName + debugSuffix 
+                    version versionName // + debugSuffix 
                 } 
             } 
             publications.all {

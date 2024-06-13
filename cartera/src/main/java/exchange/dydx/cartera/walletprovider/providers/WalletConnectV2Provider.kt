@@ -57,8 +57,8 @@ class WalletConnectV2Provider(
     override var walletStatusDelegate: WalletStatusDelegate? = null
     override var userConsentDelegate: WalletUserConsentProtocol? = null
 
-    private var connectCompletions: MutableList<WalletConnectCompletion> = mutableListOf()
-    private var operationCompletions: MutableMap<String, WalletOperationCompletion> = mutableMapOf()
+    private val connectCompletions: MutableList<WalletConnectCompletion> = mutableListOf()
+    private val operationCompletions: MutableMap<String, WalletOperationCompletion> = mutableMapOf()
 
     private var requestingWallet: WalletRequest? = null
     private var currentSession: Sign.Model.ApprovedSession? = null
@@ -423,10 +423,10 @@ class WalletConnectV2Provider(
 
         val pairing: Core.Model.Pairing?
         val pairings = CoreClient.Pairing.getPairings()
-        if (pairings.isNotEmpty()) {
-            pairing = pairings.first()
+        pairing = if (pairings.isNotEmpty()) {
+            pairings.first()
         } else {
-            pairing = CoreClient.Pairing.create() { error ->
+            CoreClient.Pairing.create() { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
         }

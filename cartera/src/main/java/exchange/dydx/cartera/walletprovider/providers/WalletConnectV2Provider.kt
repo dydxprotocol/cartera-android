@@ -14,18 +14,18 @@ import exchange.dydx.cartera.CarteraErrorCode
 import exchange.dydx.cartera.WalletConnectV2Config
 import exchange.dydx.cartera.WalletConnectionType
 import exchange.dydx.cartera.entities.Wallet
+import exchange.dydx.cartera.entities.toJsonRequest
 import exchange.dydx.cartera.tag
-import exchange.dydx.cartera.toHexString
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.typeddata.typedDataAsString
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
-import exchange.dydx.cartera.walletprovider.EthereumTransactionRequest
 import exchange.dydx.cartera.walletprovider.WalletConnectCompletion
 import exchange.dydx.cartera.walletprovider.WalletConnectedCompletion
 import exchange.dydx.cartera.walletprovider.WalletError
 import exchange.dydx.cartera.walletprovider.WalletInfo
 import exchange.dydx.cartera.walletprovider.WalletOperationCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
+import exchange.dydx.cartera.walletprovider.WalletOperationStatus
 import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletState
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
@@ -37,9 +37,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Dispatchers.IO
 import kotlinx.coroutines.launch
-import okhttp3.internal.toHexString
-import org.json.JSONException
-import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class WalletConnectV2Provider(
@@ -51,7 +48,7 @@ class WalletConnectV2Provider(
             field = value
             walletStatusDelegate?.statusChanged(value)
         }
-    override val walletStatus: WalletStatusProtocol?
+    override val walletStatus: WalletStatusProtocol
         get() = _walletStatus
 
     override var walletStatusDelegate: WalletStatusDelegate? = null
@@ -68,6 +65,41 @@ class WalletConnectV2Provider(
     // expiry must be between current timestamp + MIN_INTERVAL and current timestamp + MAX_INTERVAL (MIN_INTERVAL: 300, MAX_INTERVAL: 604800)
     private val requestExpiry: Long
         get() = (System.currentTimeMillis() / 1000) + 400
+
+    private val nilDelegate = object : SignClient.DappDelegate {
+        override fun onConnectionStateChange(state: Sign.Model.ConnectionState) {
+        }
+
+        override fun onError(error: Sign.Model.Error) {
+        }
+
+        override fun onProposalExpired(proposal: Sign.Model.ExpiredProposal) {
+        }
+
+        override fun onRequestExpired(request: Sign.Model.ExpiredRequest) {
+        }
+
+        override fun onSessionApproved(approvedSession: Sign.Model.ApprovedSession) {
+        }
+
+        override fun onSessionDelete(deletedSession: Sign.Model.DeletedSession) {
+        }
+
+        override fun onSessionEvent(sessionEvent: Sign.Model.SessionEvent) {
+        }
+
+        override fun onSessionExtend(session: Sign.Model.Session) {
+        }
+
+        override fun onSessionRejected(rejectedSession: Sign.Model.RejectedSession) {
+        }
+
+        override fun onSessionRequestResponse(response: Sign.Model.SessionRequestResponse) {
+        }
+
+        override fun onSessionUpdate(updatedSession: Sign.Model.UpdatedSession) {
+        }
+    }
 
     private val dappDelegate = object : SignClient.DappDelegate {
         override fun onSessionApproved(approvedSession: Sign.Model.ApprovedSession) {
@@ -244,16 +276,17 @@ class WalletConnectV2Provider(
             SignClient.initialize(init) { error ->
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
-
-            SignClient.setDappDelegate(dappDelegate)
         }
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
         if (_walletStatus.state == WalletState.CONNECTED_TO_WALLET) {
-            completion(walletStatus?.connectedWallet, null)
+            completion(walletStatus.connectedWallet, null)
         } else {
             requestingWallet = request
+
+            SignClient.setDappDelegate(dappDelegate)
+
             CoroutineScope(IO).launch {
                 doConnect(request = request) { pairing, error ->
                     CoroutineScope(Dispatchers.Main).launch {
@@ -297,20 +330,24 @@ class WalletConnectV2Provider(
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
             currentPairing = null
-            _walletStatus.state = WalletState.IDLE
-            _walletStatus.connectedWallet = null
-            _walletStatus.connectionDeeplink = null
-            walletStatusDelegate?.statusChanged(_walletStatus)
-
-            connectCompletions.clear()
-            operationCompletions.clear()
         }
+
+        _walletStatus.state = WalletState.IDLE
+        _walletStatus.connectedWallet = null
+        _walletStatus.connectionDeeplink = null
+        walletStatusDelegate?.statusChanged(_walletStatus)
+
+        connectCompletions.clear()
+        operationCompletions.clear()
+
+        SignClient.setDappDelegate(nilDelegate)
     }
 
     override fun signMessage(
         request: WalletRequest,
         message: String,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         fun requestParams(): Sign.Params.Request? {
@@ -338,6 +375,7 @@ class WalletConnectV2Provider(
         request: WalletRequest,
         typedDataProvider: WalletTypedDataProviderProtocol?,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         fun requestParams(): Sign.Params.Request? {
@@ -366,6 +404,7 @@ class WalletConnectV2Provider(
     override fun send(
         request: WalletTransactionRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         fun requestParams(): Sign.Params.Request? {
@@ -394,6 +433,7 @@ class WalletConnectV2Provider(
         request: WalletRequest,
         chain: EthereumAddChainRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")
@@ -597,27 +637,6 @@ private fun Sign.Model.ApprovedSession.account(): String? {
     return if (split.count() > 2) {
         split[2]
     } else {
-        null
-    }
-}
-
-private fun EthereumTransactionRequest.toJsonRequest(): String? {
-    var request: MutableMap<String, Any?> = mutableMapOf()
-
-    request["from"] = fromAddress
-    request["to"] = toAddress ?: "0x"
-    request["gas"] = gasLimit?.toHexString()
-    request["gasPrice"] = gasPriceInWei?.toHexString()
-    request["value"] = weiValue.toHexString()
-    request["data"] = data
-    request["nonce"] = nonce?.let {
-        "0x" + it.toHexString()
-    }
-    val filtered = request.filterValues { it != null }
-
-    return try {
-        JSONObject(filtered).toString()
-    } catch (e: JSONException) {
         null
     }
 }

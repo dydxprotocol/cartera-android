@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
@@ -55,7 +54,7 @@ import net.glxn.qrgen.android.QRCode
 
 object WalletList {
     enum class WalletAction {
-        Connect, SignMessage, SignTypedData, SignTransaction
+        Connect, SignMessage, SignTypedData, SignTransaction, Disconnect
     }
 
     enum class QrCodeAction {
@@ -65,17 +64,18 @@ object WalletList {
     data class WalletListState(
         val wallets: List<Wallet> = listOf(),
         var selectedWallet: Wallet? = null,
-        val walletAction: ((WalletAction, Wallet?, Boolean) -> Unit)? = null,
-        val debugQRCodeAction: ((QrCodeAction, Boolean) -> Unit)? = null
+        val walletAction: ((WalletAction, Wallet?, Boolean, Boolean) -> Unit)? = null,
+        val debugQRCodeAction: ((QrCodeAction, Boolean) -> Unit)? = null,
+        val wcModalAction: (() -> Unit)? = null
     ) {
         var showingQrCodeState: Boolean by mutableStateOf(false)
         var deeplinkUri: String? by mutableStateOf(null)
         var showBottomSheet: Boolean by mutableStateOf(false)
         var useTestnet: Boolean by mutableStateOf(true)
+        var useWcModal: Boolean by mutableStateOf(false)
     }
 
     @SuppressLint("CoroutineCreationDuringComposition")
-    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun Content() {
         val context = LocalContext.current
@@ -91,11 +91,11 @@ object WalletList {
 
         ModalBottomSheetLayout(
             sheetContent = {
-                walletActionSheetView(viewState = state.value)
+                WalletActionSheetView(viewState = state.value)
             },
             sheetState = bottomSheetState,
         ) {
-            walletListContent(
+            WalletListContent(
                 viewState = state.value,
                 coroutineScope = coroutineScope,
                 bottomSheetState = bottomSheetState,
@@ -119,9 +119,8 @@ object WalletList {
         }
     }
 
-    @OptIn(ExperimentalMaterialApi::class)
     @Composable
-    fun walletListContent(
+    fun WalletListContent(
         viewState: WalletList.WalletListState,
         coroutineScope: CoroutineScope,
         bottomSheetState: ModalBottomSheetState
@@ -137,6 +136,7 @@ object WalletList {
                             .clickable {
                                 if (wallet.installed(context)) {
                                     viewState.selectedWallet = wallet
+                                    viewState.useWcModal = false
                                     coroutineScope.launch {
                                         bottomSheetState.show()
                                     }
@@ -168,6 +168,30 @@ object WalletList {
                     }
                     Divider()
                 }
+            }
+
+            item { Spacer(modifier = Modifier.height(24.dp)) }
+
+            item {
+                Divider()
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            // nav.openWalletConnectModal()
+                            viewState.wcModalAction?.invoke()
+                        },
+                ) {
+                    Text(
+                        "WalletConnect Modal",
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .weight(1f, false),
+                        textAlign = TextAlign.Start,
+                    )
+                }
+                Divider()
             }
 
             item { Spacer(modifier = Modifier.height(24.dp)) }
@@ -227,7 +251,7 @@ object WalletList {
     }
 
     @Composable
-    private fun walletActionSheetView(viewState: WalletListState) {
+    private fun WalletActionSheetView(viewState: WalletListState) {
         val buttonModifier = Modifier
             .padding(all = 15.dp)
             .fillMaxWidth()
@@ -244,6 +268,7 @@ object WalletList {
                         WalletAction.Connect,
                         viewState.selectedWallet,
                         viewState.useTestnet,
+                        viewState.useWcModal,
                     )
                 },
                 modifier = buttonModifier,
@@ -256,6 +281,7 @@ object WalletList {
                         WalletAction.SignMessage,
                         viewState.selectedWallet,
                         viewState.useTestnet,
+                        viewState.useWcModal,
                     )
                 },
                 modifier = buttonModifier,
@@ -268,6 +294,7 @@ object WalletList {
                         WalletAction.SignTypedData,
                         viewState.selectedWallet,
                         viewState.useTestnet,
+                        viewState.useWcModal,
                     )
                 },
                 modifier = buttonModifier,
@@ -280,11 +307,25 @@ object WalletList {
                         WalletAction.SignTransaction,
                         viewState.selectedWallet,
                         viewState.useTestnet,
+                        viewState.useWcModal,
                     )
                 },
                 modifier = buttonModifier,
             ) {
                 Text("Send Transaction", style = buttonTextStyle)
+            }
+            TextButton(
+                onClick = {
+                    viewState.walletAction?.invoke(
+                        WalletAction.Disconnect,
+                        viewState.selectedWallet,
+                        viewState.useTestnet,
+                        viewState.useWcModal,
+                    )
+                },
+                modifier = buttonModifier,
+            ) {
+                Text("Disconnect", style = buttonTextStyle)
             }
             Spacer(modifier = Modifier.height(20.dp))
             TextButton(

@@ -25,6 +25,7 @@ import exchange.dydx.cartera.walletprovider.WalletError
 import exchange.dydx.cartera.walletprovider.WalletInfo
 import exchange.dydx.cartera.walletprovider.WalletOperationCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
+import exchange.dydx.cartera.walletprovider.WalletOperationStatus
 import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletState
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
@@ -145,6 +146,7 @@ class WalletSegueProvider(
         request: WalletRequest,
         message: String,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         val signAction = Web3JsonRPC.PersonalSign(address = "", message = message).action()
@@ -155,6 +157,7 @@ class WalletSegueProvider(
         request: WalletRequest,
         typedDataProvider: WalletTypedDataProviderProtocol?,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         typedDataProvider?.typedDataAsString?.let { typedData ->
@@ -167,6 +170,7 @@ class WalletSegueProvider(
     override fun send(
         request: WalletTransactionRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         if (request.ethereum != null) {
@@ -200,6 +204,7 @@ class WalletSegueProvider(
         request: WalletRequest,
         chain: EthereumAddChainRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")

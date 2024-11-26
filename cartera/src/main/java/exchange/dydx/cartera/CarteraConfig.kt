@@ -5,12 +5,14 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
+import androidx.navigation.NavHostController
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import exchange.dydx.cartera.walletprovider.providers.MagicLinkProvider
+import exchange.dydx.cartera.walletprovider.providers.WalletConnectModalProvider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV1Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV2Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletSegueProvider
@@ -19,6 +21,7 @@ import java.lang.reflect.Type
 sealed class WalletConnectionType(val rawValue: String) {
     object WalletConnect : WalletConnectionType("walletConnect")
     object WalletConnectV2 : WalletConnectionType("walletConnectV2")
+    object WalletConnectModal : WalletConnectionType("walletConnectModal")
     object WalletSegue : WalletConnectionType("walletSegue")
     object MagicLink : WalletConnectionType("magicLink")
     class Custom(val value: String) : WalletConnectionType(value)
@@ -29,6 +32,7 @@ sealed class WalletConnectionType(val rawValue: String) {
             return when (rawValue) {
                 WalletConnect.rawValue -> WalletConnect
                 WalletConnectV2.rawValue -> WalletConnectV2
+                WalletConnectModal.rawValue -> WalletConnectModal
                 WalletSegue.rawValue -> WalletSegue
                 MagicLink.rawValue -> MagicLink
                 else -> Custom(rawValue)
@@ -70,6 +74,12 @@ class CarteraConfig(
                     application,
                 ),
             )
+
+            registration[WalletConnectionType.WalletConnectModal] = RegistrationConfig(
+                provider = WalletConnectModalProvider(
+                    application = application,
+                ),
+            )
         }
         if (walletProvidersConfig.walletSegue != null) {
             registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
@@ -85,21 +95,26 @@ class CarteraConfig(
         )
     }
 
-    fun updateConfig(walletProvidersConfig: WalletProvidersConfig) {
+    fun updateConfig(walletProvidersConfig: WalletProvidersConfig, nav: NavHostController) {
         if (walletProvidersConfig.walletConnectV2 != null) {
             registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
                 provider = WalletConnectV2Provider(
-                    walletProvidersConfig.walletConnectV2,
-                    application,
+                    walletConnectV2Config = walletProvidersConfig.walletConnectV2,
+                    application = application,
+                ),
+            )
+            registration[WalletConnectionType.WalletConnectModal] = RegistrationConfig(
+                provider = WalletConnectModalProvider(
+                    application = application,
                 ),
             )
         }
         if (walletProvidersConfig.walletSegue != null) {
             registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
                 provider = WalletSegueProvider(
-                    walletProvidersConfig.walletSegue,
-                    application,
-                    launcher,
+                    walletSegueConfig = walletProvidersConfig.walletSegue,
+                    application = application,
+                    launcher = launcher,
                 ),
             )
         }

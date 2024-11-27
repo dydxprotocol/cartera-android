@@ -134,7 +134,7 @@ class WalletListViewModel(
                 toastMessage("Please switch to the wallet app")
             },
             completion = { signature, error ->
-                // delay for 1 second
+                // delay for 1 second, according to app switching
                 Thread.sleep(1000)
                 if (error != null) {
                     toastWalletError(error)

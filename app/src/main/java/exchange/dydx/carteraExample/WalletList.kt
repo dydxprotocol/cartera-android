@@ -179,7 +179,6 @@ object WalletList {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
-                            // nav.openWalletConnectModal()
                             viewState.wcModalAction?.invoke()
                         },
                 ) {

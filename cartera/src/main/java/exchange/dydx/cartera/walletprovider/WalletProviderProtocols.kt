@@ -9,8 +9,17 @@ data class WalletRequest(
     val wallet: Wallet? = null,
     val address: String? = null,
     val chainId: String? = null,
-    val context: Context
-)
+    val context: Context,
+    val useModal: Boolean = false,
+) {
+    val ethChain: String?
+        get() {
+            if (chainId == null) {
+                return null
+            }
+            return "eip155:$chainId"
+        }
+}
 
 data class WalletTransactionRequest(
     val walletRequest: WalletRequest,
@@ -35,16 +44,17 @@ data class EthereumAddChainRequest(
 )
 
 typealias WalletConnectedCompletion = (info: WalletInfo?) -> Unit
+typealias WalletOperationStatus = (requireAppSwitching: Boolean) -> Unit
 typealias WalletOperationCompletion = (signed: String?, error: WalletError?) -> Unit
 typealias WalletConnectCompletion = (info: WalletInfo?, error: WalletError?) -> Unit
 
 interface WalletOperationProtocol {
     fun connect(request: WalletRequest, completion: WalletConnectCompletion)
     fun disconnect()
-    fun signMessage(request: WalletRequest, message: String, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion)
-    fun sign(request: WalletRequest, typedDataProvider: WalletTypedDataProviderProtocol?, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion)
-    fun send(request: WalletTransactionRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion)
-    fun addChain(request: WalletRequest, chain: EthereumAddChainRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion)
+    fun signMessage(request: WalletRequest, message: String, connected: WalletConnectedCompletion?, status: WalletOperationStatus?, completion: WalletOperationCompletion)
+    fun sign(request: WalletRequest, typedDataProvider: WalletTypedDataProviderProtocol?, connected: WalletConnectedCompletion?, status: WalletOperationStatus?, completion: WalletOperationCompletion)
+    fun send(request: WalletTransactionRequest, connected: WalletConnectedCompletion?, status: WalletOperationStatus?, completion: WalletOperationCompletion)
+    fun addChain(request: WalletRequest, chain: EthereumAddChainRequest, connected: WalletConnectedCompletion?, status: WalletOperationStatus?, completion: WalletOperationCompletion)
 }
 
 interface WalletUserConsentOperationProtocol : WalletOperationProtocol {

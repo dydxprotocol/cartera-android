@@ -39,23 +39,27 @@ class WalletListViewModel(
         viewModelScope.launch {
             viewState.value = WalletList.WalletListState(
                 wallets = CarteraConfig.shared?.wallets ?: listOf(),
-                walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean ->
+                walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean, useModal: Boolean ->
                     val chainId: String = if (useTestnet) CarteraConstants.testnetChainId else "1"
                     when (action) {
                         WalletList.WalletAction.Connect -> {
-                            testConnect(wallet, chainId)
+                            testConnect(wallet, chainId, useModal)
                         }
 
                         WalletList.WalletAction.SignMessage -> {
-                            testSignMessage(wallet, chainId)
+                            testSignMessage(wallet, chainId, useModal)
                         }
 
                         WalletList.WalletAction.SignTypedData -> {
-                            testSignTypedData(wallet, chainId)
+                            testSignTypedData(wallet, chainId, useModal)
                         }
 
                         WalletList.WalletAction.SignTransaction -> {
-                            testSendTransaction(wallet, chainId)
+                            testSendTransaction(wallet, chainId, useModal)
+                        }
+
+                        WalletList.WalletAction.Disconnect -> {
+                            provider.disconnect()
                         }
                     }
                 },
@@ -71,7 +75,21 @@ class WalletListViewModel(
                         }
                     }
                 },
+                wcModalAction = {
+                    testWcModal()
+                },
             )
+        }
+    }
+
+    private fun testWcModal() {
+        viewState.value.showingQrCodeState = false
+        viewState.value.showBottomSheet = false
+        viewModelScope.launch {
+            viewState.value.showBottomSheet = true
+            viewState.value.selectedWallet = null
+
+            viewState.value.useWcModal = true
         }
     }
 
@@ -79,6 +97,8 @@ class WalletListViewModel(
         viewState.value.showingQrCodeState = true
         viewState.value.showBottomSheet = false
         viewState.value.selectedWallet = null
+
+        viewState.value.useWcModal = false
 
         provider.startDebugLink(chainId = chainId) { _, error ->
             viewState.value.showingQrCodeState = false
@@ -90,8 +110,8 @@ class WalletListViewModel(
         }
     }
 
-    private fun testConnect(wallet: Wallet?, chainId: String) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
+    private fun testConnect(wallet: Wallet?, chainId: String, useModal: Boolean) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.connect(request) { info, error ->
             if (error != null) {
                 toastWalletError(error)
@@ -101,15 +121,21 @@ class WalletListViewModel(
         }
     }
 
-    private fun testSignMessage(wallet: Wallet?, chainId: String) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
+    private fun testSignMessage(wallet: Wallet?, chainId: String, useModal: Boolean) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.signMessage(
             request = request,
             message = "Test Message",
             connected = { info ->
                 Log.d(tag(this@WalletListViewModel), "Connected to: ${info?.peerName ?: info?.address}")
             },
+            status = { requireAppSwitching ->
+                Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
+                toastMessage("Please switch to the wallet app")
+            },
             completion = { signature, error ->
+                // delay for 1 second, according to app switching
+                Thread.sleep(1000)
                 if (error != null) {
                     toastWalletError(error)
                 } else {
@@ -119,18 +145,24 @@ class WalletListViewModel(
         )
     }
 
-    private fun testSignTypedData(wallet: Wallet?, chainId: String) {
+    private fun testSignTypedData(wallet: Wallet?, chainId: String, useModal: Boolean) {
         val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = chainId.toInt())
         dydxSign.message = message(action = "Sample Action", chainId = chainId.toInt())
 
-        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
+        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.sign(
             request = request,
             typedDataProvider = dydxSign,
             connected = { info ->
                 toastMessage("Connected to: ${info?.peerName ?: info?.address}")
             },
+            status = { requireAppSwitching ->
+                Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
+                toastMessage("Please switch to the wallet app")
+            },
             completion = { signature, error ->
+                // delay for 1 second
+                Thread.sleep(1000)
                 if (error != null) {
                     toastWalletError(error)
                 } else {
@@ -140,8 +172,8 @@ class WalletListViewModel(
         )
     }
 
-    private fun testSendTransaction(wallet: Wallet?, chainId: String) {
-        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context)
+    private fun testSendTransaction(wallet: Wallet?, chainId: String, useModal: Boolean) {
+        val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.connect(request) { info, error ->
             if (error != null) {
                 toastWalletError(error)
@@ -165,7 +197,14 @@ class WalletListViewModel(
                     connected = { info ->
                         toastMessage("Connected to: ${info?.peerName ?: info?.address}")
                     },
+                    status = { requireAppSwitching ->
+                        Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
+                        toastMessage("Please switch to the wallet app")
+                    },
+
                     completion = { txHash, error ->
+                        // delay for 1 second
+                        Thread.sleep(1000)
                         if (error != null) {
                             toastWalletError(error)
                         } else {
@@ -189,7 +228,7 @@ class WalletListViewModel(
     }
 
     private fun toastWalletError(error: WalletError) {
-        Toast.makeText(context, "$error.title: $error.message", Toast.LENGTH_SHORT).show()
+        Toast.makeText(context, "${error.title}: ${error.message}", Toast.LENGTH_SHORT).show()
     }
 
     private fun message(action: String, chainId: Int): WalletTypedData {

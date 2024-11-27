@@ -6,6 +6,7 @@ import exchange.dydx.cartera.walletprovider.WalletConnectCompletion
 import exchange.dydx.cartera.walletprovider.WalletConnectedCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
+import exchange.dydx.cartera.walletprovider.WalletOperationStatus
 import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
 import exchange.dydx.cartera.walletprovider.WalletStatusImp
@@ -35,6 +36,7 @@ class MagicLinkProvider : WalletOperationProviderProtocol {
         request: WalletRequest,
         message: String,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")
@@ -44,6 +46,7 @@ class MagicLinkProvider : WalletOperationProviderProtocol {
         request: WalletRequest,
         typedDataProvider: WalletTypedDataProviderProtocol?,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")
@@ -52,6 +55,7 @@ class MagicLinkProvider : WalletOperationProviderProtocol {
     override fun send(
         request: WalletTransactionRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")
@@ -61,6 +65,7 @@ class MagicLinkProvider : WalletOperationProviderProtocol {
         request: WalletRequest,
         chain: EthereumAddChainRequest,
         connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")

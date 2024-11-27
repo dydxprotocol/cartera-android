@@ -8,24 +8,24 @@ import exchange.dydx.cartera.WalletSegueConfig
 object WalletProvidersConfigUtil {
     fun getWalletProvidersConfig(): WalletProvidersConfig {
         val walletConnectV1Config = WalletConnectV1Config(
-            "dYdX",
-            "dYdX Trading App",
-            "https://media.dydx.exchange/logos/dydx-x.png",
-            "dydx:",
-            "https://trade.dydx.exchange/",
-            "wss://api.stage.dydx.exchange/wc/",
+            clientName = "dYdX",
+            clientDescription = "dYdX Trading App",
+            iconUrl = "https://media.dydx.exchange/logos/dydx-x.png",
+            scheme = "dydx:",
+            clientUrl = "https://trade.dydx.exchange/",
+            bridgeUrl = "wss://api.stage.dydx.exchange/wc/",
         )
 
         val walletConnectV2Config = WalletConnectV2Config(
-            "156a34507d8e657347be0ecd294659bb",
-            "dYdX",
-            "dYdX Trading App",
-            "https://trade.dydx.exchange/",
-            listOf<String>("https://media.dydx.exchange/logos/dydx-x.png"),
+            projectId = "156a34507d8e657347be0ecd294659bb",
+            clientName = "dYdX",
+            clientDescription = "dYdX Trading App",
+            clientUrl = "https://trade.dydx.exchange/",
+            iconUrls = listOf<String>("https://media.dydx.exchange/logos/dydx-x.png"),
         )
 
         val walletSegueConfig = WalletSegueConfig(
-            "https://trade.stage.dydx.exchange/walletsegueCarteraExample",
+            callbackUrl = "https://trade.stage.dydx.exchange/walletsegueCarteraExample",
         )
 
         return WalletProvidersConfig(

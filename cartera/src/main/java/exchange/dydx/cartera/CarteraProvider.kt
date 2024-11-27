@@ -9,6 +9,7 @@ import exchange.dydx.cartera.walletprovider.WalletConnectedCompletion
 import exchange.dydx.cartera.walletprovider.WalletError
 import exchange.dydx.cartera.walletprovider.WalletOperationCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
+import exchange.dydx.cartera.walletprovider.WalletOperationStatus
 import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
 import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
@@ -52,21 +53,38 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
         currentRequestHandler?.disconnect()
     }
 
-    override fun signMessage(request: WalletRequest, message: String, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
+    override fun signMessage(
+        request: WalletRequest,
+        message: String,
+        connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
+        completion: WalletOperationCompletion
+    ) {
         updateCurrentHandler(request)
-        currentRequestHandler?.signMessage(request, message, connected, completion)
+        currentRequestHandler?.signMessage(request, message, connected, status, completion)
     }
 
-    override fun sign(request: WalletRequest, typedDataProvider: WalletTypedDataProviderProtocol?, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
+    override fun sign(
+        request: WalletRequest,
+        typedDataProvider: WalletTypedDataProviderProtocol?,
+        connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
+        completion: WalletOperationCompletion
+    ) {
         updateCurrentHandler(request)
-        currentRequestHandler?.sign(request, typedDataProvider, connected, completion)
+        currentRequestHandler?.sign(request, typedDataProvider, connected, status, completion)
     }
 
-    override fun send(request: WalletTransactionRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
+    override fun send(
+        request: WalletTransactionRequest,
+        connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
+        completion: WalletOperationCompletion
+    ) {
         updateCurrentHandler(request.walletRequest)
-        userConsentDelegate?.showTransactionConsent(request) { status ->
-            when (status) {
-                WalletUserConsentStatus.CONSENTED -> currentRequestHandler?.send(request, connected, completion)
+        userConsentDelegate?.showTransactionConsent(request) { consentStatus ->
+            when (consentStatus) {
+                WalletUserConsentStatus.CONSENTED -> currentRequestHandler?.send(request, connected, status, completion)
                 WalletUserConsentStatus.REJECTED -> {
                     val error = WalletError(CarteraErrorCode.USER_CANCELED, "User canceled")
                     completion(null, error)
@@ -75,21 +93,31 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
         }
     }
 
-    override fun addChain(request: WalletRequest, chain: EthereumAddChainRequest, connected: WalletConnectedCompletion?, completion: WalletOperationCompletion) {
+    override fun addChain(
+        request: WalletRequest,
+        chain: EthereumAddChainRequest,
+        connected: WalletConnectedCompletion?,
+        status: WalletOperationStatus?,
+        completion: WalletOperationCompletion
+    ) {
         updateCurrentHandler(request)
         // Disregard chainId, since we don't want to check for chainId match here.
         val addChainRequest = WalletRequest(request.wallet, null, null, context)
-        currentRequestHandler?.addChain(addChainRequest, chain, connected, completion)
+        currentRequestHandler?.addChain(addChainRequest, chain, connected, status, completion)
     }
 
     // Private
 
     private fun updateCurrentHandler(request: WalletRequest) {
-        val newHandler = request.wallet?.config?.connectionType(context)?.let {
-            CarteraConfig.shared?.getProvider(it)
-        } ?: run {
-            debugQrCodeProvider
+        val provider = if (request.useModal) {
+            CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectModal)
+        } else {
+            request.wallet?.config?.connectionType(context)?.let {
+                CarteraConfig.shared?.getProvider(it)
+            }
         }
+
+        val newHandler = provider ?: debugQrCodeProvider
 
         if (newHandler !== currentRequestHandler) {
             currentRequestHandler?.disconnect()

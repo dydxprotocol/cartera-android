@@ -26,8 +26,8 @@ publishing {
 
     repositories {
         maven {
-            def github_username = System.getenv('github_username')
-            def github_token = System.getenv('github_token')
+            def github_username = System.getenv('GITHUB_ACTOR')
+            def github_token = System.getenv('GITHUB_TOKEN')
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/dydxprotocol/cartera-android")
             credentials {

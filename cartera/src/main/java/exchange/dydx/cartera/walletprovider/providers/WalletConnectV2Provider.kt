@@ -107,10 +107,9 @@ class WalletConnectV2Provider(
             Log.d(tag(this@WalletConnectV2Provider), "onSessionApproved")
 
             CoroutineScope(Dispatchers.Main).launch {
-                if (requestingWallet?.chainId != null &&
-                    approvedSession.chainId() != null &&
-                    requestingWallet?.chainId != approvedSession.chainId().toString()
-                ) {
+                val requestChainId = requestingWallet?.chainId
+                val walletChainIds = approvedSession.chainIds() ?: emptyList()
+                if (requestChainId != null && !walletChainIds.contains(requestChainId)) {
                     for (connectCompletion in connectCompletions) {
                         connectCompletion.invoke(
                             null,
@@ -354,7 +353,7 @@ class WalletConnectV2Provider(
             val sessionTopic = currentSession?.topic
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
-            val chainId = currentSession?.chainId()
+            val chainId = request.chainId ?: currentSession?.chainId()
             return if (sessionTopic != null && account != null && namespace != null && chainId != null) {
                 Sign.Params.Request(
                     sessionTopic = sessionTopic,
@@ -382,7 +381,7 @@ class WalletConnectV2Provider(
             val sessionTopic = currentSession?.topic
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
-            val chainId = currentSession?.chainId()
+            val chainId = request.chainId ?: currentSession?.chainId()
             val message = typedDataProvider?.typedDataAsString?.replace("\"", "\\\"")
 
             return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
@@ -411,7 +410,7 @@ class WalletConnectV2Provider(
             val sessionTopic = currentSession?.topic
             val account = currentSession?.account()
             val namespace = currentSession?.namespace()
-            val chainId = currentSession?.chainId()
+            val chainId = request.walletRequest.chainId ?: currentSession?.chainId()
             val message = request.ethereum?.toJsonRequest()
             return if (sessionTopic != null && account != null && namespace != null && chainId != null && message != null) {
                 Sign.Params.Request(
@@ -461,14 +460,12 @@ class WalletConnectV2Provider(
         val requiredNamespaces: Map<String, Sign.Model.Namespace.Proposal> = mapOf(namespace to proposal) /*Required namespaces to setup a session*/
         val optionalNamespaces: Map<String, Sign.Model.Namespace.Proposal> = emptyMap() /*Optional namespaces to setup a session*/
 
-        val pairing: Core.Model.Pairing?
         val pairings = CoreClient.Pairing.getPairings()
-        pairing = if (pairings.isNotEmpty()) {
-            pairings.first()
-        } else {
-            CoreClient.Pairing.create() { error ->
-                Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
-            }
+        for (pairing in pairings) {
+            CoreClient.Pairing.disconnect(pairing.topic)
+        }
+        val pairing = CoreClient.Pairing.create() { error ->
+            Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
         }
 
         val expiry = (System.currentTimeMillis() / 1000) + TimeUnit.SECONDS.convert(7, TimeUnit.DAYS)
@@ -620,6 +617,17 @@ private fun Sign.Model.ApprovedSession.chainId(): Int? {
         split[1].toInt()
     } else {
         null
+    }
+}
+
+private fun Sign.Model.ApprovedSession.chainIds(): List<String>? {
+    return accounts.mapNotNull {
+        val split = it.split(":")
+        if (split.count() > 1) {
+            split[1]
+        } else {
+            null
+        }
     }
 }
 

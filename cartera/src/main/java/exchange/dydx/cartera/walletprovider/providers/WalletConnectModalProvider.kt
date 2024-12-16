@@ -156,7 +156,11 @@ class WalletConnectModalProvider(
         fun requestParams(): Modal.Params.Request? {
             val sessionTopic = currentSession?.topic
             val account = _walletStatus.connectedWallet?.address
-            val chainId = currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            val chainId = if (request.chainId != null) {
+                "$ethNamespace:${request.chainId}"
+            } else {
+                currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            }
             return if (sessionTopic != null && account != null && chainId != null) {
                 Modal.Params.Request(
                     sessionTopic = sessionTopic,
@@ -183,7 +187,11 @@ class WalletConnectModalProvider(
         fun requestParams(): Modal.Params.Request? {
             val sessionTopic = currentSession?.topic
             val account = _walletStatus.connectedWallet?.address
-            val chainId = currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            val chainId = if (request.chainId != null) {
+                "$ethNamespace:${request.chainId}"
+            } else {
+                currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            }
             val message = typedDataProvider?.typedDataAsString?.replace("\"", "\\\"")
 
             return if (sessionTopic != null && account != null && chainId != null && message != null) {
@@ -211,7 +219,11 @@ class WalletConnectModalProvider(
         fun requestParams(): Modal.Params.Request? {
             val sessionTopic = currentSession?.topic
             val account = _walletStatus.connectedWallet?.address
-            val chainId = currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            val chainId = if (request.walletRequest.chainId != null) {
+                "$ethNamespace:${request.walletRequest.chainId}"
+            } else {
+                currentSession?.namespaces?.get(ethNamespace)?.chains?.firstOrNull()
+            }
             val message = request.ethereum?.toJsonRequest()
 
             return if (sessionTopic != null && account != null && chainId != null && message != null) {
@@ -328,10 +340,12 @@ class WalletConnectModalProvider(
 
         CoroutineScope(Dispatchers.Main).launch {
             val approvedSsssion = approvedSession.namespaces[ethNamespace]
-            val approvedChain = approvedSsssion?.chains?.firstOrNull()
-            if (requestingWallet?.ethChain != null &&
-                approvedChain != requestingWallet?.ethChain
-            ) {
+
+            val requestChainId = requestingWallet?.chainId
+            val walletChainIds = approvedSsssion?.chains?.map {
+                it.split(":")[1]
+            } ?: emptyList()
+            if (requestChainId != null && !walletChainIds.contains(requestChainId)) {
                 for (connectCompletion in connectCompletions) {
                     connectCompletion.invoke(
                         null,

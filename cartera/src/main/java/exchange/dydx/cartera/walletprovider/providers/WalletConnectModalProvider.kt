@@ -342,8 +342,9 @@ class WalletConnectModalProvider(
             val approvedSsssion = approvedSession.namespaces[ethNamespace]
 
             val requestChainId = requestingWallet?.chainId
-            val walletChainIds = approvedSsssion?.chains?.map {
-                it.split(":")[1]
+            val walletChainIds = approvedSsssion?.chains?.mapNotNull {
+                val components = it.split(":")
+                if (components.size > 1) components[1] else null
             } ?: emptyList()
             if (requestChainId != null && !walletChainIds.contains(requestChainId)) {
                 for (connectCompletion in connectCompletions) {

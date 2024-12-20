@@ -5,11 +5,15 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.navigation.NavHostController
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.walletconnect.android.CoreClient
 import com.walletconnect.wcmodal.client.Modal
 import com.walletconnect.wcmodal.client.WalletConnectModal
 import com.walletconnect.wcmodal.ui.openWalletConnectModal
 import exchange.dydx.cartera.CarteraErrorCode
+import exchange.dydx.cartera.R
+import exchange.dydx.cartera.WalletConnectModalConfig
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.entities.toJsonRequest
 import exchange.dydx.cartera.tag
@@ -34,9 +38,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
+import java.lang.reflect.Type
 
 class WalletConnectModalProvider(
-    private val application: Application
+    private val application: Application,
+    private val config: WalletConnectModalConfig?,
 ) : WalletOperationProviderProtocol, WalletConnectModal.ModalDelegate {
 
     private var _walletStatus = WalletStatusImp()
@@ -65,8 +71,23 @@ class WalletConnectModalProvider(
     var nav: NavHostController? = null
 
     init {
+        val jsonData = application.getResources().openRawResource(R.raw.wc_modal_ids)
+            .bufferedReader().use { it.readText() }
+        val gson = Gson()
+        val idListType: Type = object : TypeToken<List<String>?>() {}.type
+        val wc_modal_ids: List<String>? = gson.fromJson(jsonData, idListType)
+        val excludedIds = wc_modal_ids?.toMutableList() ?: mutableListOf()
+        for (id in config?.walletIds ?: emptyList()) {
+            if (excludedIds.contains(id)) {
+                excludedIds.remove(id)
+            }
+        }
         WalletConnectModal.initialize(
-            init = Modal.Params.Init(CoreClient),
+            init = Modal.Params.Init(
+                core = CoreClient,
+                recommendedWalletsIds = config?.walletIds ?: emptyList(),
+                excludedWalletIds = excludedIds,
+            ),
             onSuccess = {
                 // Callback will be called if initialization is successful
                 Timber.tag(tag(this)).d("WalletConnectModal initialized.")
@@ -306,9 +327,9 @@ class WalletConnectModalProvider(
                 completion(
                     null,
                     WalletError(
-                        CarteraErrorCode.CONNECTION_FAILED,
-                        "WalletConnectModal.request error",
-                        error.throwable.stackTraceToString(),
+                        code = CarteraErrorCode.CONNECTION_FAILED,
+                        title = "WalletConnectModal.request error",
+                        message = error.throwable.stackTraceToString(),
                     ),
                 )
             },

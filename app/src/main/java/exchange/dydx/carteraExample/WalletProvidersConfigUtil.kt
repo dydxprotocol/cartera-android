@@ -1,5 +1,6 @@
 package exchange.dydx.carteraexample
 
+import exchange.dydx.cartera.WalletConnectModalConfig
 import exchange.dydx.cartera.WalletConnectV1Config
 import exchange.dydx.cartera.WalletConnectV2Config
 import exchange.dydx.cartera.WalletProvidersConfig
@@ -29,9 +30,10 @@ object WalletProvidersConfigUtil {
         )
 
         return WalletProvidersConfig(
-            walletConnectV1Config,
-            walletConnectV2Config,
-            walletSegueConfig,
+            walletConnectV1 = walletConnectV1Config,
+            walletConnectV2 = walletConnectV2Config,
+            walletConnectModal = WalletConnectModalConfig.default,
+            walletSegue = walletSegueConfig,
         )
     }
 }

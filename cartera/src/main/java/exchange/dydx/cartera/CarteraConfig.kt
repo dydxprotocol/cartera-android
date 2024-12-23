@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.result.ActivityResultLauncher
-import androidx.navigation.NavHostController
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import exchange.dydx.cartera.entities.Wallet
@@ -74,13 +73,6 @@ class CarteraConfig(
                     application = application,
                 ),
             )
-
-            registration[WalletConnectionType.WalletConnectModal] = RegistrationConfig(
-                provider = WalletConnectModalProvider(
-                    application = application,
-                    config = walletProvidersConfig.walletConnectModal,
-                ),
-            )
         }
         if (walletProvidersConfig.walletSegue != null) {
             registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
@@ -96,30 +88,13 @@ class CarteraConfig(
         )
     }
 
-    fun updateConfig(walletProvidersConfig: WalletProvidersConfig, nav: NavHostController) {
-        if (walletProvidersConfig.walletConnectV2 != null) {
-            registration[WalletConnectionType.WalletConnectV2] = RegistrationConfig(
-                provider = WalletConnectV2Provider(
-                    walletConnectV2Config = walletProvidersConfig.walletConnectV2,
-                    application = application,
-                ),
-            )
-            registration[WalletConnectionType.WalletConnectModal] = RegistrationConfig(
-                provider = WalletConnectModalProvider(
-                    application = application,
-                    config = walletProvidersConfig.walletConnectModal,
-                ),
-            )
-        }
-        if (walletProvidersConfig.walletSegue != null) {
-            registration[WalletConnectionType.WalletSegue] = RegistrationConfig(
-                provider = WalletSegueProvider(
-                    walletSegueConfig = walletProvidersConfig.walletSegue,
-                    application = application,
-                    launcher = launcher,
-                ),
-            )
-        }
+    fun updateModalConfig(walletConnectModal: WalletConnectModalConfig) {
+        registration[WalletConnectionType.WalletConnectModal] = RegistrationConfig(
+            provider = WalletConnectModalProvider(
+                application = application,
+                config = walletConnectModal,
+            ),
+        )
     }
 
     fun registerProvider(

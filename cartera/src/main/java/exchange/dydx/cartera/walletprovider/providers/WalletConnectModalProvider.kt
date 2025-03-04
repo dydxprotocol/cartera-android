@@ -517,7 +517,7 @@ class WalletConnectModalProvider(
             return
         }
 
-        val deeplinkPairingUri = currentSession?.metaData?.appLink ?: currentSession?.metaData?.redirect
+        val deeplinkPairingUri = currentSession?.metaData?.redirect ?: currentSession?.metaData?.appLink
         if (deeplinkPairingUri != null) {
             try {
                 val uri = Uri.parse(deeplinkPairingUri)

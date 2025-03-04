@@ -3,7 +3,6 @@ package exchange.dydx.cartera.walletprovider.providers
 import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
 import com.walletconnect.android.Core
 import com.walletconnect.android.CoreClient
@@ -589,21 +588,19 @@ class WalletConnectV2Provider(
             return
         }
         // val deeplinkPairingUri = it.replace("wc:", "wc://")
-        val url = WalletConnectUtils.createUrl(
+        val uri = WalletConnectUtils.createUrl(
             wallet = request.wallet,
             deeplink = pairing.uri,
             type = WalletConnectionType.WalletConnectV2,
             context = request.context,
         )
-        val deeplinkPairingUri = url?.toURI()?.toString()
-        if (deeplinkPairingUri != null) {
+        if (uri != null) {
             try {
-                val uri = Uri.parse(deeplinkPairingUri)
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 application.startActivity(intent)
             } catch (exception: ActivityNotFoundException) {
-                Log.d(tag(this@WalletConnectV2Provider), "There is no app to handle deep linkt")
+                Log.d(tag(this@WalletConnectV2Provider), "There is no app to handle deep link")
             }
         } else {
             Log.d(tag(this@WalletConnectV2Provider), "Imvalid deeplink uri")

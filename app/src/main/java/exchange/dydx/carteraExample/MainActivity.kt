@@ -19,6 +19,7 @@ import com.google.accompanist.navigation.material.ExperimentalMaterialNavigation
 import com.google.accompanist.navigation.material.ModalBottomSheetLayout
 import com.walletconnect.wcmodal.ui.walletConnectModalGraph
 import exchange.dydx.cartera.CarteraConfig
+import exchange.dydx.cartera.WalletConnectModalConfig
 import exchange.dydx.cartera.WalletConnectionType
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectModalProvider
 
@@ -39,6 +40,7 @@ class MainActivity : ComponentActivity() {
             launcher = launcher,
         )
         CarteraConfig.shared?.registerWallets(context = applicationContext)
+        CarteraConfig.shared?.updateModalConfig(WalletConnectModalConfig.default)
 
         setContent {
             MyApp {

@@ -1,6 +1,7 @@
 package exchange.dydx.cartera
 
 import android.content.Context
+import android.net.Uri
 import exchange.dydx.cartera.entities.connectionType
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
@@ -26,6 +27,10 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
     fun startDebugLink(chainId: String, completion: WalletConnectCompletion) {
         updateCurrentHandler(WalletRequest(null, null, chainId, context))
         currentRequestHandler?.connect(WalletRequest(null, null, chainId, context), completion)
+    }
+
+    override fun handleResponse(uri: Uri): Boolean {
+        return currentRequestHandler?.handleResponse(uri) ?: false
     }
 
     // WalletOperationProviderProtocol

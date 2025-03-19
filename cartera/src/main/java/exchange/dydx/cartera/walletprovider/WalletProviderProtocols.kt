@@ -1,6 +1,7 @@
 package exchange.dydx.cartera.walletprovider
 
 import android.content.Context
+import android.net.Uri
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import java.math.BigInteger
@@ -61,4 +62,8 @@ interface WalletUserConsentOperationProtocol : WalletOperationProtocol {
     var userConsentDelegate: WalletUserConsentProtocol?
 }
 
-interface WalletOperationProviderProtocol : WalletStatusProviding, WalletUserConsentOperationProtocol
+interface WalletDeeplinkHandlingProtocol {
+    fun handleResponse(uri: Uri): Boolean
+}
+
+interface WalletOperationProviderProtocol : WalletStatusProviding, WalletUserConsentOperationProtocol, WalletDeeplinkHandlingProtocol

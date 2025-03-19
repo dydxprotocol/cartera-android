@@ -3,6 +3,7 @@ package exchange.dydx.cartera.walletprovider.providers
 import android.app.Application
 import android.content.ActivityNotFoundException
 import android.content.Intent
+import android.net.Uri
 import android.util.Log
 import com.walletconnect.android.Core
 import com.walletconnect.android.CoreClient
@@ -275,6 +276,10 @@ class WalletConnectV2Provider(
                 Log.e(tag(this@WalletConnectV2Provider), error.throwable.stackTraceToString())
             }
         }
+    }
+
+    override fun handleResponse(uri: Uri): Boolean {
+        return false
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {

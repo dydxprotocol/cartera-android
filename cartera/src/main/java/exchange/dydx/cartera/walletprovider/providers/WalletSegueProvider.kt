@@ -65,6 +65,10 @@ class WalletSegueProvider(
         }
     }
 
+    override fun handleResponse(uri: Uri): Boolean {
+        return client?.handleResponse(uri) ?: false
+    }
+
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
         if (walletStatus?.connectedWallet == null || client?.isConnected ?: false == false) {
             _walletStatus.state = WalletState.IDLE
@@ -208,10 +212,6 @@ class WalletSegueProvider(
         completion: WalletOperationCompletion
     ) {
         TODO("Not yet implemented")
-    }
-
-    fun handleResponse(url: Uri): Boolean {
-        return client?.handleResponse(url) ?: false
     }
 
     private fun doSign(

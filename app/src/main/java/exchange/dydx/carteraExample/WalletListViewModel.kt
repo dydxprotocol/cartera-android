@@ -1,12 +1,14 @@
 package exchange.dydx.carteraexample
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.solana.publickey.SolanaPublicKey
+import com.solana.transaction.Message
+import com.solana.transaction.Transaction
 import exchange.dydx.cartera.CarteraConfig
 import exchange.dydx.cartera.CarteraConstants
 import exchange.dydx.cartera.CarteraProvider
@@ -20,7 +22,11 @@ import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
 import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
 import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
+import exchange.dydx.carteraexample.solana.SolanaInteractor
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import timber.log.Timber
 import java.math.BigInteger
 
 class WalletListViewModel(
@@ -67,7 +73,7 @@ class WalletListViewModel(
                         }
 
                         WalletList.WalletAction.SignTransaction -> {
-                            testSendTransaction(wallet, chainId, useModal)
+                            testSendTransaction(wallet, chainId, useTestnet, useModal)
                         }
 
                         WalletList.WalletAction.Disconnect -> {
@@ -139,10 +145,12 @@ class WalletListViewModel(
             request = request,
             message = "Test Message",
             connected = { info ->
-                Log.d(tag(this@WalletListViewModel), "Connected to: ${info?.peerName ?: info?.address}")
+                Timber.tag(tag(this@WalletListViewModel))
+                    .d("Connected to: ${info?.peerName ?: info?.address}")
             },
             status = { requireAppSwitching ->
-                Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
+                Timber.tag(tag(this@WalletListViewModel))
+                    .d("Require app switching: $requireAppSwitching")
                 toastMessage("Please switch to the wallet app")
             },
             completion = { signature, error ->
@@ -169,7 +177,8 @@ class WalletListViewModel(
                 toastMessage("Connected to: ${info?.peerName ?: info?.address}")
             },
             status = { requireAppSwitching ->
-                Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
+                Timber.tag(tag(this@WalletListViewModel))
+                    .d("Require app switching: $requireAppSwitching")
                 toastMessage("Please switch to the wallet app")
             },
             completion = { signature, error ->
@@ -184,48 +193,91 @@ class WalletListViewModel(
         )
     }
 
-    private fun testSendTransaction(wallet: Wallet?, chainId: String, useModal: Boolean) {
+    private fun testSendTransaction(wallet: Wallet?, chainId: String, useTestnet: Boolean, useModal: Boolean) {
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.connect(request) { info, error ->
             if (error != null) {
                 toastWalletError(error)
             } else {
-                val ethereumRequest = EthereumTransactionRequest(
-                    fromAddress = info?.address ?: "0x00",
-                    toAddress = "0x0000000000000000000000000000000000000000",
-                    weiValue = BigInteger("1"),
-                    data = "0x",
-                    nonce = null,
-                    gasPriceInWei = BigInteger("100000000"),
-                    maxFeePerGas = null,
-                    maxPriorityFeePerGas = null,
-                    gasLimit = BigInteger("21000"),
-                    chainId = chainId.toString(),
-                )
-                val request =
-                    WalletTransactionRequest(walletRequest = request, ethereum = ethereumRequest)
-                provider.send(
-                    request = request,
-                    connected = { info ->
-                        toastMessage("Connected to: ${info?.peerName ?: info?.address}")
-                    },
-                    status = { requireAppSwitching ->
-                        Log.d(tag(this@WalletListViewModel), "Require app switching: $requireAppSwitching")
-                        toastMessage("Please switch to the wallet app")
-                    },
-
-                    completion = { txHash, error ->
-                        // delay for 1 second
-                        Thread.sleep(1000)
-                        if (error != null) {
-                            toastWalletError(error)
+                val publicKey = info?.address
+                if (wallet?.id == "phantom-wallet" && publicKey != null) {
+                     val interactor = if (useTestnet) {
+                        SolanaInteractor(SolanaInteractor.devnetClient)
+                    } else {
+                        SolanaInteractor(SolanaInteractor.mainnetClient)
+                    }
+                     val scope = CoroutineScope(Dispatchers.Unconfined)
+                    scope.launch {
+                        val response = interactor.getRecentBlockhash()
+                        if (response.result != null) {
+                            val memoInstruction = interactor.buildTestMemoTransaction(address = SolanaPublicKey.from(publicKey), memo = "Hello, Solana!")
+                            val memoTxMessage = Message.Builder()
+                                .addInstruction(memoInstruction) // Pass in instruction from previous step
+                                .setRecentBlockhash(response.result!!.blockhash)
+                                .build()
+                            val unsignedTx = Transaction(memoTxMessage)
+                            val request =
+                                WalletTransactionRequest(
+                                    walletRequest = request,
+                                    ethereum = null,
+                                    solana = unsignedTx.serialize()
+                                )
+                            CoroutineScope(Dispatchers.Main).launch {
+                                doSendTransaction(request)
+                            }
                         } else {
-                            toastMessage("Transaction Hash: $txHash")
+                            CoroutineScope(Dispatchers.Main).launch {
+                                toastMessage("Error fetching blockhash")
+                            }
                         }
-                    },
-                )
+                    }
+                } else {
+                    val ethereumRequest = EthereumTransactionRequest(
+                        fromAddress = info?.address ?: "0x00",
+                        toAddress = "0x0000000000000000000000000000000000000000",
+                        weiValue = BigInteger("1"),
+                        data = "0x",
+                        nonce = null,
+                        gasPriceInWei = BigInteger("100000000"),
+                        maxFeePerGas = null,
+                        maxPriorityFeePerGas = null,
+                        gasLimit = BigInteger("21000"),
+                        chainId = chainId.toString(),
+                    )
+                    val request =
+                        WalletTransactionRequest(
+                            walletRequest = request,
+                            ethereum = ethereumRequest,
+                            solana = null
+                        )
+                    doSendTransaction(request)
+                }
             }
         }
+    }
+
+    private fun doSendTransaction(request: WalletTransactionRequest) {
+        provider.send(
+            request = request,
+            connected = { info ->
+                toastMessage("Connected to: ${info?.peerName ?: info?.address}")
+            },
+            status = { requireAppSwitching ->
+                Timber.tag(tag(this@WalletListViewModel))
+                    .d("Require app switching: $requireAppSwitching")
+                toastMessage("Please switch to the wallet app")
+            },
+
+            completion = { txHash, error ->
+                // delay for 1 second
+                Thread.sleep(1000)
+                if (error != null) {
+                    toastWalletError(error)
+                } else {
+                    toastMessage("Transaction Hash: $txHash")
+                }
+            },
+        )
     }
 
     override fun statusChanged(status: WalletStatusProtocol) {

@@ -15,6 +15,7 @@ import exchange.dydx.cartera.encodeToBase58String
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.tag
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
+import exchange.dydx.cartera.typeddata.typedDataAsString
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
 import exchange.dydx.cartera.walletprovider.WalletConnectCompletion
 import exchange.dydx.cartera.walletprovider.WalletConnectedCompletion
@@ -34,8 +35,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import timber.log.Timber
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 import kotlin.random.Random
 
 class PhantomWalletProvider(
@@ -166,11 +165,67 @@ class PhantomWalletProvider(
             }
 
             CallbackAction.onSignTransaction.name -> {
-
+                if (operationCompletion != null) {
+                    if (errorCode != null) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, errorMessage))
+                            operationCompletion = null
+                        }
+                    } else {
+                        val data = decryptPayload(
+                            payload = uri.getQueryParameter("data"),
+                            nonce = uri.getQueryParameter("nonce")
+                        )
+                        val response = try {
+                            Gson().fromJson(data?.decodeToString(), SignTransactionResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (response != null) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(response.transaction, null)
+                                operationCompletion = null
+                            }
+                        } else {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to decrypt payload"))
+                                operationCompletion = null
+                            }
+                        }
+                    }
+                }
             }
 
             CallbackAction.onSendTransaction.name -> {
-
+                if (operationCompletion != null) {
+                    if (errorCode != null) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, errorMessage))
+                            operationCompletion = null
+                        }
+                    } else {
+                        val data = decryptPayload(
+                            payload = uri.getQueryParameter("data"),
+                            nonce = uri.getQueryParameter("nonce")
+                        )
+                        val response = try {
+                            Gson().fromJson(data?.decodeToString(), SendTransactionResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (response != null) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(response.signature, null)
+                                operationCompletion = null
+                            }
+                        } else {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to decrypt payload"))
+                                operationCompletion = null
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -198,27 +253,24 @@ class PhantomWalletProvider(
             return
         }
 
-        val url = "$baseUrlString/${CallbackAction.onConnect.request}"
         val cluster = request.chainId
         if (cluster == null) {
             completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to get chainId"))
             return
         }
 
-        val appUrl = phantomWalletConfig.appUrl.urlEncoded()
-        val redirectLink = "${phantomWalletConfig.callbackUrl}/${CallbackAction.onConnect}".urlEncoded()
-        val urlQueryParams = mapOf(
-            "dapp_encryption_public_key" to publickKeyEncoded,
-            "cluster" to cluster,
-            "app_url" to appUrl,
-            "redirect_link" to redirectLink,
-        )
-            .map { "${it.key}=${it.value}" }.joinToString("&")
-
         try {
-            val requestUrl = "$url?$urlQueryParams"
-            if (openPeerDeeplink(requestUrl.toUri())) {
+            val uri = "$baseUrlString/${CallbackAction.onConnect.request}".toUri()
+                .buildUpon()
+                .appendQueryParameter("dapp_encryption_public_key", publickKeyEncoded)
+                .appendQueryParameter("cluster", cluster)
+                .appendQueryParameter("app_url", phantomWalletConfig.appUrl)
+                .appendQueryParameter("redirect_link", "${phantomWalletConfig.callbackUrl}/${CallbackAction.onConnect}")
+                .build()
+
+            if (openPeerDeeplink(uri)) {
                 connectionCompletion = completion
+                connectionWallet = request.wallet
             } else {
                 completion(
                     null,
@@ -278,7 +330,7 @@ class PhantomWalletProvider(
             if (openPeerDeeplink(uri)) {
                 operationCompletion = completion
             } else {
-                completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app"))
+                completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to open Phantom app"))
             }
         } else {
             completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to create request URI"))
@@ -292,7 +344,18 @@ class PhantomWalletProvider(
         status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
-        TODO("Not yet implemented")
+        val message =  typedDataProvider?.typedDataAsString
+        if (message == null) {
+            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Typed data is null"))
+            return
+        }
+        signMessage(
+            request = request,
+            message = message,
+            connected = connected,
+            status = status,
+            completion = completion
+        )
     }
 
     override fun send(
@@ -301,7 +364,43 @@ class PhantomWalletProvider(
         status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
-        TODO("Not yet implemented")
+        connect(request = request.walletRequest) { info, error ->
+            if (error != null) {
+                completion(null, error)
+            } else {
+                connected?.invoke(info)
+                doSend(request, completion)
+            }
+        }
+    }
+
+    private fun doSend(
+        request: WalletTransactionRequest,
+        completion: WalletOperationCompletion
+    ) {
+        val data = request.solana
+        if (data == null) {
+            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Solana transaction data is null"))
+            return
+        }
+
+        val sendRequest = SendTransactionRequest(
+            session = session,
+            transaction = data.encodeToBase58String()
+        )
+        val uri = createRequestUri(
+            request = Gson().toJson(sendRequest),
+            action = CallbackAction.onSendTransaction
+        )
+        if (uri != null) {
+            if (openPeerDeeplink(uri)) {
+                operationCompletion = completion
+            } else {
+                completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to open Phantom app"))
+            }
+        } else {
+            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to create request URI"))
+        }
     }
 
     override fun addChain(
@@ -377,9 +476,6 @@ class PhantomWalletProvider(
     }
 }
 
-fun String.urlEncoded(): String {
-    return URLEncoder.encode(this, StandardCharsets.UTF_8.toString())
-}
 
 data class ConnectResponse(
     @SerializedName("public_key") val publicKey: String?,

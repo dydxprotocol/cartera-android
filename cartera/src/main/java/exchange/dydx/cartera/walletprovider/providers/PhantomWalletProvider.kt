@@ -5,16 +5,21 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import androidx.core.net.toUri
+import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.iwebpp.crypto.TweetNaclFast
 import exchange.dydx.cartera.CarteraErrorCode
 import exchange.dydx.cartera.PhantomWalletConfig
+import exchange.dydx.cartera.decodeBase58
 import exchange.dydx.cartera.encodeToBase58String
+import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.tag
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
 import exchange.dydx.cartera.walletprovider.WalletConnectCompletion
 import exchange.dydx.cartera.walletprovider.WalletConnectedCompletion
 import exchange.dydx.cartera.walletprovider.WalletError
+import exchange.dydx.cartera.walletprovider.WalletInfo
 import exchange.dydx.cartera.walletprovider.WalletOperationCompletion
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
 import exchange.dydx.cartera.walletprovider.WalletOperationStatus
@@ -25,9 +30,13 @@ import exchange.dydx.cartera.walletprovider.WalletStatusImp
 import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
 import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import kotlin.random.Random
 
 class PhantomWalletProvider(
     private val phantomWalletConfig: PhantomWalletConfig,
@@ -35,11 +44,11 @@ class PhantomWalletProvider(
 ): WalletOperationProviderProtocol  {
 
     private enum class CallbackAction(val request: String) {
-        ON_CONNECT("connect"),
-        ON_DISCONNECT("disconnect"),
-        ON_SIGN_MESSAGE("signMessage"),
-        ON_SIGN_TRANSACTION("signTransaction"),
-        ON_SEND_TRANSACTION("signAndSendTransaction")
+        onConnect("connect"),
+        onDisconnect("disconnect"),
+        onSignMessage("signMessage"),
+        onSignTransaction("signTransaction"),
+        onSendTransaction("signAndSendTransaction")
     }
 
     private var _walletStatus = WalletStatusImp()
@@ -60,7 +69,111 @@ class PhantomWalletProvider(
     private var phantomPublicKey: ByteArray? = null
     private var session: String? = null
 
+    private var connectionCompletion:  WalletConnectCompletion? = null
+    private var connectionWallet: Wallet? = null
+    private var operationCompletion: WalletOperationCompletion? = null
+
     override fun handleResponse(uri: Uri): Boolean {
+        if (!uri.toString().startsWith(phantomWalletConfig.callbackUrl)) {
+            return false
+        }
+
+        val action = uri.lastPathSegment ?: return false
+        val errorCode = uri.getQueryParameter("errorCode")
+        val errorMessage = uri.getQueryParameter("errorMessage") ?: "Unknown error"
+
+        when (action) {
+            CallbackAction.onConnect.name -> {
+                if (connectionCompletion != null) {
+                    if (errorCode != null) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            connectionCompletion?.invoke(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, errorMessage))
+                            connectionCompletion = null
+                        }
+                    } else {
+                        val encodedPublicKey =
+                            uri.getQueryParameter("phantom_encryption_public_key")
+                        phantomPublicKey = encodedPublicKey?.decodeBase58()
+
+                        val data = decryptPayload(
+                            payload = uri.getQueryParameter("data"),
+                            nonce = uri.getQueryParameter("nonce")
+                        )
+                        val response = try {
+                            Gson().fromJson(data?.decodeToString(), ConnectResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (response != null) {
+                            session = response.session
+                            val walletInfo = WalletInfo(
+                                address = response.publicKey,
+                                chainId = null,
+                                wallet = connectionWallet
+                            )
+                            _walletStatus.state = WalletState.CONNECTED_TO_WALLET
+                            _walletStatus.connectedWallet = walletInfo
+                            CoroutineScope(Dispatchers.Main).launch {
+                                connectionCompletion?.invoke(walletInfo, null)
+                                connectionCompletion = null
+                            }
+                        } else {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                connectionCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to decrypt payload"))
+                                connectionCompletion = null
+                            }
+                        }
+                    }
+                }
+            }
+
+            CallbackAction.onDisconnect.name -> {
+                if (errorCode != null) {
+                    Timber.tag(tag(this@PhantomWalletProvider)).d("Disconnected Error: $errorMessage, $errorCode")
+                }
+            }
+
+            CallbackAction.onSignMessage.name -> {
+                if (operationCompletion != null) {
+                    if (errorCode != null) {
+                        CoroutineScope(Dispatchers.Main).launch {
+                            operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, errorMessage))
+                            operationCompletion = null
+                        }
+                    } else {
+                        val data = decryptPayload(
+                            payload = uri.getQueryParameter("data"),
+                            nonce = uri.getQueryParameter("nonce")
+                        )
+                        val response = try {
+                            Gson().fromJson(data?.decodeToString(), SignMessageResponse::class.java)
+                        } catch (e: Exception) {
+                            null
+                        }
+                        if (response != null) {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(response.signature, null)
+                                operationCompletion = null
+                            }
+                        } else {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to decrypt payload"))
+                                operationCompletion = null
+                            }
+                        }
+                    }
+                }
+            }
+
+            CallbackAction.onSignTransaction.name -> {
+
+            }
+
+            CallbackAction.onSendTransaction.name -> {
+
+            }
+        }
+
         return true
     }
 
@@ -85,7 +198,7 @@ class PhantomWalletProvider(
             return
         }
 
-        val url = "$baseUrlString/${CallbackAction.ON_CONNECT}"
+        val url = "$baseUrlString/${CallbackAction.onConnect.request}"
         val cluster = request.chainId
         if (cluster == null) {
             completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to get chainId"))
@@ -93,7 +206,7 @@ class PhantomWalletProvider(
         }
 
         val appUrl = phantomWalletConfig.appUrl.urlEncoded()
-        val redirectLink = "${phantomWalletConfig.callbackUrl}/${CallbackAction.ON_CONNECT}".urlEncoded()
+        val redirectLink = "${phantomWalletConfig.callbackUrl}/${CallbackAction.onConnect}".urlEncoded()
         val urlQueryParams = mapOf(
             "dapp_encryption_public_key" to publickKeyEncoded,
             "cluster" to cluster,
@@ -102,17 +215,33 @@ class PhantomWalletProvider(
         )
             .map { "${it.key}=${it.value}" }.joinToString("&")
 
-        val requestUrl = "$url?$urlQueryParams"
-        if (openPeerDeeplink(requestUrl)) {
-            // TODO
-        } else {
-            completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app"))
+        try {
+            val requestUrl = "$url?$urlQueryParams"
+            if (openPeerDeeplink(requestUrl.toUri())) {
+                connectionCompletion = completion
+            } else {
+                completion(
+                    null,
+                    WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app")
+                )
+            }
+        } catch (e: Exception) {
+            completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, e.message ?: "Unknown error"))
         }
-
     }
 
     override fun disconnect() {
-        TODO("Not yet implemented")
+        publicKey = null
+        privateKey = null
+        phantomPublicKey = null
+        connectionCompletion = null
+        operationCompletion = null
+
+        session = null
+        connectionWallet = null
+        _walletStatus.state = WalletState.IDLE
+        _walletStatus.connectedWallet = null
+        _walletStatus.connectionDeeplink = null
     }
 
     override fun signMessage(
@@ -122,7 +251,38 @@ class PhantomWalletProvider(
         status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
-        TODO("Not yet implemented")
+        connect(request = request) { info, error ->
+            if (error != null) {
+                completion(null, error)
+            } else {
+                connected?.invoke(info)
+                doSignMessage(message, completion)
+            }
+        }
+    }
+
+    private fun doSignMessage(
+        message: String,
+        completion: WalletOperationCompletion
+    ) {
+        val request = SignMessageRequest(
+            session = session,
+            message = message.toByteArray().encodeToBase58String(),
+            display = "utf8"
+        )
+        val uri = createRequestUri(
+            request = Gson().toJson(request),
+            action = CallbackAction.onSignMessage
+        )
+        if (uri != null) {
+            if (openPeerDeeplink(uri)) {
+                operationCompletion = completion
+            } else {
+                completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app"))
+            }
+        } else {
+            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to create request URI"))
+        }
     }
 
     override fun sign(
@@ -154,8 +314,7 @@ class PhantomWalletProvider(
         TODO("Not yet implemented")
     }
 
-    private fun openPeerDeeplink(url: String): Boolean {
-        val uri = url.toUri()
+    private fun openPeerDeeplink(uri: Uri): Boolean {
         try {
             val intent = Intent(Intent.ACTION_VIEW, uri)
             intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -167,8 +326,101 @@ class PhantomWalletProvider(
         }
     }
 
+    private fun decryptPayload(payload: String?, nonce: String?): ByteArray? {
+        val decodedData = payload?.decodeBase58() ?: return null
+        val decodedNonceData = nonce?.decodeBase58() ?: return null
+        val publicKey = phantomPublicKey ?: return null
+        val privateKey = privateKey ?: return null
+
+        val box = TweetNaclFast.Box(publicKey, privateKey)
+        return box.open(decodedData, decodedNonceData)
+    }
+
+    private fun encryptPayload(payload: ByteArray?): Pair<ByteArray, ByteArray>? {
+        val payload = payload ?: return null
+        val publicKey = phantomPublicKey ?: return null
+        val privateKey = privateKey ?: return null
+        val nonceData: ByteArray = generateRandomBytes(length = 24)
+
+        val box = TweetNaclFast.Box(publicKey, privateKey)
+        val encryptedData = box.box(payload, nonceData)
+        return Pair(encryptedData, nonceData)
+    }
+
+    private fun generateRandomBytes(length: Int): ByteArray {
+        return Random.Default.nextBytes(length)
+    }
+
+    private fun createRequestUri(request: String?, action: CallbackAction): Uri? {
+        val result = encryptPayload(request?.toByteArray()) ?: return null
+        val publicKey = publicKey ?: return null
+        val payload = result.first
+        val nonce = result.second
+        try {
+            val uri = "$baseUrlString/${action.request}".toUri()
+                .buildUpon()
+                .appendQueryParameter("payload", payload.encodeToBase58String())
+                .appendQueryParameter("nonce", nonce.encodeToBase58String())
+                .appendQueryParameter(
+                    "redirect_link",
+                    "${phantomWalletConfig.callbackUrl}/${action.name}"
+                )
+                .appendQueryParameter(
+                    "dapp_encryption_public_key",
+                    publicKey.encodeToBase58String()
+                )
+                .build()
+            return uri
+        } catch (e: Exception) {
+            return null
+        }
+    }
 }
 
 fun String.urlEncoded(): String {
     return URLEncoder.encode(this, StandardCharsets.UTF_8.toString())
 }
+
+data class ConnectResponse(
+    @SerializedName("public_key") val publicKey: String?,
+    @SerializedName("session") val session: String?
+)
+
+data class DisconnectRequest(
+    @SerializedName("session") val session: String?
+)
+
+data class SignMessageRequest(
+    @SerializedName("session") val session: String?,
+    @SerializedName("message") val message: String?,
+    @SerializedName("display") val display: String?  // "utf8" | "hex"
+)
+
+data class SignMessageResponse(
+    @SerializedName("signature") val signature: String?
+)
+
+data class SignTransactionRequest(
+    @SerializedName("session") val session: String?,
+    @SerializedName("transaction") val transaction: String?
+)
+
+data class SignTransactionResponse(
+    @SerializedName("transaction") val transaction: String?
+)
+
+data class SendTransactionRequest(
+    @SerializedName("session") val session: String?,
+    @SerializedName("transaction") val transaction: String?
+)
+
+data class SendTransactionResponse(
+    @SerializedName("signature") val signature: String?
+)
+
+data class PhantomSession(
+    @SerializedName("app_url") val appUrl: String?,
+    @SerializedName("timestamp") val timestamp: String?,
+    @SerializedName("chain") val chain: String?,
+    @SerializedName("cluster") val cluster: String?
+)

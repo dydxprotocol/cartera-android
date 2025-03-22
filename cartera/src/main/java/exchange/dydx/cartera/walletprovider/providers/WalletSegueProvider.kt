@@ -70,7 +70,7 @@ class WalletSegueProvider(
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
-        if (walletStatus?.connectedWallet == null || client?.isConnected ?: false == false) {
+        if (walletStatus?.connectedWallet == null || (client?.isConnected ?: false) == false) {
             _walletStatus.state = WalletState.IDLE
         }
         val wallet = request.wallet

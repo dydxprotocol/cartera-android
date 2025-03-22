@@ -24,7 +24,7 @@ sealed class WalletConnectionType(val rawValue: String) {
     object WalletConnectModal : WalletConnectionType("walletConnectModal")
     object WalletSegue : WalletConnectionType("walletSegue")
     object MagicLink : WalletConnectionType("magicLink")
-    object Phantom : WalletConnectionType("phantom")
+    object PhantomWallet : WalletConnectionType("phantomWallet")
     class Custom(val value: String) : WalletConnectionType(value)
     object Unknown : WalletConnectionType("unknown")
 
@@ -36,7 +36,7 @@ sealed class WalletConnectionType(val rawValue: String) {
                 WalletConnectModal.rawValue -> WalletConnectModal
                 WalletSegue.rawValue -> WalletSegue
                 MagicLink.rawValue -> MagicLink
-                Phantom.rawValue -> Phantom
+                PhantomWallet.rawValue -> PhantomWallet
                 else -> Custom(rawValue)
             }
         }
@@ -87,10 +87,10 @@ class CarteraConfig(
                 ),
             )
         }
-        if (walletProvidersConfig.phantom != null) {
-            registration[WalletConnectionType.Phantom] = RegistrationConfig(
+        if (walletProvidersConfig.phantomWallet != null) {
+            registration[WalletConnectionType.PhantomWallet] = RegistrationConfig(
                 provider = PhantomWalletProvider(
-                    phantomWalletConfig = walletProvidersConfig.phantom,
+                    phantomWalletConfig = walletProvidersConfig.phantomWallet,
                     application = application,
                 ),
             )
@@ -155,7 +155,7 @@ data class WalletProvidersConfig(
     val walletConnectV2: WalletConnectV2Config? = null,
     val walletConnectModal: WalletConnectModalConfig? = null,
     val walletSegue: WalletSegueConfig? = null,
-    val phantom: PhantomWalletConfig? = null,
+    val phantomWallet: PhantomWalletConfig? = null,
 )
 
 data class WalletConnectV1Config(

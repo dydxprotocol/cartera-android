@@ -104,7 +104,7 @@
     "description": "",
     "homepage": "https://phantom.com/",
     "chains": [
-      "eip155:1"
+      "solana"
     ],
     "versions": [
       "1"

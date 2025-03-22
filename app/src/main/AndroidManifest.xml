@@ -11,7 +11,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.CarteraExample"
-        tools:targetApi="31" >
+        tools:targetApi="31"
+        android:launchMode="singleTop">
 
         <activity
             android:name=".MainActivity"
@@ -23,14 +24,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
 
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
 
-                <category android:name="android.intent.category.LAUNCHER" />
+                <data
+                    android:scheme="https"
+                    android:host="v4-web-internal.vercel.app"
+                    android:pathPrefix="/walletsegueCarteraExample" />
 
-                <data android:scheme="app"
-                    android:host="kotlin-dapp-wc"
-                    android:pathPrefix="/request" />
+                <data
+                    android:scheme="https"
+                    android:host="v4-web-internal.vercel.app"
+                    android:pathPrefix="/phantomCarteraExample" />
+
             </intent-filter>
         </activity>
     </application>
@@ -46,6 +54,7 @@
         <package android:name="me.rainbow"/>
         <package android:name="io.oneinch.android"/>
         <package android:name="pro.huobi"/>
+        <package android:name="app.phantom"/>
     </queries>
 
 </manifest>

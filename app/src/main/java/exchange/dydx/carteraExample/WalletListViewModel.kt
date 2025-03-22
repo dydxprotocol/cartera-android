@@ -40,7 +40,19 @@ class WalletListViewModel(
             viewState.value = WalletList.WalletListState(
                 wallets = CarteraConfig.shared?.wallets ?: listOf(),
                 walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean, useModal: Boolean ->
-                    val chainId: String = if (useTestnet) CarteraConstants.testnetChainId else "1"
+                    val chainId: String = if (useTestnet) {
+                        if (wallet?.id == "phantom-wallet") {
+                            "devnet"
+                        } else {
+                            CarteraConstants.testnetChainId
+                        }
+                    } else {
+                        if (wallet?.id == "phantom-wallet") {
+                            "mainnet-beta"
+                        } else {
+                            "1"
+                        }
+                    }
                     when (action) {
                         WalletList.WalletAction.Connect -> {
                             testConnect(wallet, chainId, useModal)

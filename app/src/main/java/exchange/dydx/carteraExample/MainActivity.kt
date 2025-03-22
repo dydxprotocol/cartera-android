@@ -1,6 +1,8 @@
 package exchange.dydx.carteraexample
 
 import android.app.Application
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,6 +30,12 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterialNavigationApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val action: String? = intent?.action
+        val data: Uri? = intent?.data
+        if (action == "android.intent.action.VIEW" && data != null) {
+            CarteraConfig.handleResponse(data)
+        }
 
         val launcher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             val uri = result.data?.data ?: return@registerForActivityResult
@@ -73,7 +81,21 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        // must store the new intent unless getIntent()
+        // will return the old one
+        setIntent(intent)
+
+        val action: String? = intent.action
+        val data: Uri? = intent.data
+        if (action == "android.intent.action.VIEW" && data != null) {
+            CarteraConfig.handleResponse(data)
+        }
+    }
 }
+
 
 @Composable
 fun MyApp(content: @Composable () -> Unit) {

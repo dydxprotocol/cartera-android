@@ -27,19 +27,19 @@ object WalletProvidersConfigUtil {
         )
 
         val walletSegueConfig = WalletSegueConfig(
-            callbackUrl = "https://trade.stage.dydx.exchange/walletsegueCarteraExample",
+            callbackUrl = "https://v4-web-internal.vercel.app/walletsegueCarteraExample",
         )
 
         val phantomWalletConfig = PhantomWalletConfig(
             callbackUrl = "https://v4-web-internal.vercel.app/phantomCarteraExample",
-            appUrl = "https://v4.testnet.dydx.exchange/",
+            appUrl = "https://v4-web-internal.vercel.app",
         )
         return WalletProvidersConfig(
             walletConnectV1 = walletConnectV1Config,
             walletConnectV2 = walletConnectV2Config,
             walletConnectModal = WalletConnectModalConfig.default,
             walletSegue = walletSegueConfig,
-            phantom = phantomWalletConfig,
+            phantomWallet = phantomWalletConfig,
         )
     }
 }

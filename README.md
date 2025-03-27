@@ -58,7 +58,7 @@ apply from: 'publishLocal.gradle'
 ```
 Build and push the code to Maven Local repo with:
 ```
-./gradlew publishLibraryDebugPublicationToMavenLocal
+./gradlew publishToMavenLocal
 ```
 Then add "-local-debug" to the library import from the main app's build.gradle
 ```

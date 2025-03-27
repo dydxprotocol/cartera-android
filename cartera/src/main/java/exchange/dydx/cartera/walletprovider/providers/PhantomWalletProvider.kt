@@ -253,7 +253,11 @@ class PhantomWalletProvider(
             return
         }
 
-        val cluster = request.chainId
+        val cluster = if (request.chainId == "1") {
+            "mainnet-beta"
+        } else {
+            "devnet"
+        }
         if (cluster == null) {
             completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to get chainId"))
             return

@@ -117,7 +117,7 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
         val provider = if (request.useModal) {
             CarteraConfig.shared?.getProvider(WalletConnectionType.WalletConnectModal)
         } else {
-            request.wallet?.config?.connectionType(context)?.let {
+            request.wallet?.config?.connectionType()?.let {
                 CarteraConfig.shared?.getProvider(it)
             }
         }
@@ -141,7 +141,7 @@ class CarteraProvider(private val context: Context) : WalletOperationProviderPro
     }
 
     private fun getUserActionDelegate(request: WalletRequest): WalletUserConsentProtocol {
-        val connectionType = request.wallet?.config?.connectionType(context)
+        val connectionType = request.wallet?.config?.connectionType()
         val userConsentHandler = if (connectionType != null) {
             CarteraConfig.shared?.getUserConsentHandler(connectionType)
         } else {

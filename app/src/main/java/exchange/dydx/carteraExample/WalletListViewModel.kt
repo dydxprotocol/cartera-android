@@ -47,17 +47,9 @@ class WalletListViewModel(
                 wallets = CarteraConfig.shared?.wallets ?: listOf(),
                 walletAction = { action: WalletList.WalletAction, wallet: Wallet?, useTestnet: Boolean, useModal: Boolean ->
                     val chainId: String = if (useTestnet) {
-                        if (wallet?.id == "phantom-wallet") {
-                            "devnet"
-                        } else {
-                            CarteraConstants.testnetChainId
-                        }
+                        CarteraConstants.testnetChainId
                     } else {
-                        if (wallet?.id == "phantom-wallet") {
-                            "mainnet-beta"
-                        } else {
-                            "1"
-                        }
+                        "1"
                     }
                     when (action) {
                         WalletList.WalletAction.Connect -> {
@@ -166,8 +158,13 @@ class WalletListViewModel(
     }
 
     private fun testSignTypedData(wallet: Wallet?, chainId: String, useModal: Boolean) {
-        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = chainId.toInt())
-        dydxSign.message = message(action = "Sample Action", chainId = chainId.toInt())
+        val chainIdInt = chainId.toIntOrNull()
+        if (chainIdInt == null) {
+            toastMessage("Invalid chainId: $chainId, must be an integer")
+            return
+        }
+        val dydxSign = EIP712DomainTypedDataProvider(name = "dYdX", chainId = chainIdInt)
+        dydxSign.message = message(action = "Sample Action", chainId = chainIdInt)
 
         val request = WalletRequest(wallet = wallet, address = null, chainId = chainId, context = context, useModal = useModal)
         provider.sign(
@@ -202,18 +199,24 @@ class WalletListViewModel(
                 val publicKey = info?.address
                 if (wallet?.id == "phantom-wallet" && publicKey != null) {
                      val interactor = if (useTestnet) {
-                        SolanaInteractor(SolanaInteractor.devnetClient)
+                        SolanaInteractor(SolanaInteractor.devnetUrl)
                     } else {
-                        SolanaInteractor(SolanaInteractor.mainnetClient)
+                        SolanaInteractor(SolanaInteractor.mainnetUrl)
                     }
                      val scope = CoroutineScope(Dispatchers.Unconfined)
                     scope.launch {
                         val response = interactor.getRecentBlockhash()
-                        if (response.result != null) {
+                        val blockhash = response?.value?.blockhash
+                        if (blockhash != null) {
+//                            val sss = interactor.getBalance(publicKey = publicKey)
+//                            print(sss)
+//                            val ttt = interactor.getTokenBalance(publicKey = publicKey, tokenAddress = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v")
+//                            print(ttt)
+
                             val memoInstruction = interactor.buildTestMemoTransaction(address = SolanaPublicKey.from(publicKey), memo = "Hello, Solana!")
                             val memoTxMessage = Message.Builder()
                                 .addInstruction(memoInstruction) // Pass in instruction from previous step
-                                .setRecentBlockhash(response.result!!.blockhash)
+                                .setRecentBlockhash(blockhash)
                                 .build()
                             val unsignedTx = Transaction(memoTxMessage)
                             val request =

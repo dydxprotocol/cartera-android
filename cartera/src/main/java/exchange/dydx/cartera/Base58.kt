@@ -16,7 +16,6 @@ import org.komputing.khash.sha256.extensions.sha256
  *
  */
 
-
 private const val ENCODED_ZERO = '1'
 private const val CHECKSUM_SIZE = 4
 
@@ -31,7 +30,6 @@ private val alphabetIndices by lazy {
  * @return the base58-encoded string
  */
 fun ByteArray.encodeToBase58String(): String {
-
     val input = copyOf(size) // since we modify it in-place
     if (input.isEmpty()) {
         return ""
@@ -139,7 +137,6 @@ fun ByteArray.encodeToBase58WithChecksum() = ByteArray(size + CHECKSUM_SIZE).app
     System.arraycopy(this@encodeToBase58WithChecksum, 0, this, 0, this@encodeToBase58WithChecksum.size)
     val checksum = this@encodeToBase58WithChecksum.sha256().sha256()
     System.arraycopy(checksum, 0, this, this@encodeToBase58WithChecksum.size, CHECKSUM_SIZE)
-
 }.encodeToBase58String()
 
 fun String.decodeBase58WithChecksum(): ByteArray {

@@ -198,12 +198,12 @@ class WalletListViewModel(
             } else {
                 val publicKey = info?.address
                 if (wallet?.id == "phantom-wallet" && publicKey != null) {
-                     val interactor = if (useTestnet) {
+                    val interactor = if (useTestnet) {
                         SolanaInteractor(SolanaInteractor.devnetUrl)
                     } else {
                         SolanaInteractor(SolanaInteractor.mainnetUrl)
                     }
-                     val scope = CoroutineScope(Dispatchers.Unconfined)
+                    val scope = CoroutineScope(Dispatchers.Unconfined)
                     scope.launch {
                         val response = interactor.getRecentBlockhash()
                         val blockhash = response?.value?.blockhash
@@ -223,7 +223,7 @@ class WalletListViewModel(
                                 WalletTransactionRequest(
                                     walletRequest = request,
                                     ethereum = null,
-                                    solana = unsignedTx.serialize()
+                                    solana = unsignedTx.serialize(),
                                 )
                             CoroutineScope(Dispatchers.Main).launch {
                                 doSendTransaction(request)
@@ -251,7 +251,7 @@ class WalletListViewModel(
                         WalletTransactionRequest(
                             walletRequest = request,
                             ethereum = ethereumRequest,
-                            solana = null
+                            solana = null,
                         )
                     doSendTransaction(request)
                 }

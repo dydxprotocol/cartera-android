@@ -85,8 +85,8 @@ class WalletConnectModalProvider(
         WalletConnectModal.initialize(
             init = Modal.Params.Init(
                 core = CoreClient,
-           //     recommendedWalletsIds = config?.walletIds ?: emptyList(),
-           //     excludedWalletIds = excludedIds,
+                //     recommendedWalletsIds = config?.walletIds ?: emptyList(),
+                //     excludedWalletIds = excludedIds,
             ),
             onSuccess = {
                 // Callback will be called if initialization is successful

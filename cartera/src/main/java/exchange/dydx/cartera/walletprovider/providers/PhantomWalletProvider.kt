@@ -40,7 +40,7 @@ import kotlin.random.Random
 class PhantomWalletProvider(
     private val phantomWalletConfig: PhantomWalletConfig,
     private val application: Application,
-): WalletOperationProviderProtocol  {
+) : WalletOperationProviderProtocol {
 
     private enum class CallbackAction(val request: String) {
         onConnect("connect"),
@@ -68,7 +68,7 @@ class PhantomWalletProvider(
     private var phantomPublicKey: ByteArray? = null
     private var session: String? = null
 
-    private var connectionCompletion:  WalletConnectCompletion? = null
+    private var connectionCompletion: WalletConnectCompletion? = null
     private var connectionWallet: Wallet? = null
     private var operationCompletion: WalletOperationCompletion? = null
 
@@ -96,7 +96,7 @@ class PhantomWalletProvider(
 
                         val data = decryptPayload(
                             payload = uri.getQueryParameter("data"),
-                            nonce = uri.getQueryParameter("nonce")
+                            nonce = uri.getQueryParameter("nonce"),
                         )
                         val response = try {
                             Gson().fromJson(data?.decodeToString(), ConnectResponse::class.java)
@@ -108,7 +108,7 @@ class PhantomWalletProvider(
                             val walletInfo = WalletInfo(
                                 address = response.publicKey,
                                 chainId = null,
-                                wallet = connectionWallet
+                                wallet = connectionWallet,
                             )
                             _walletStatus.state = WalletState.CONNECTED_TO_WALLET
                             _walletStatus.connectedWallet = walletInfo
@@ -142,7 +142,7 @@ class PhantomWalletProvider(
                     } else {
                         val data = decryptPayload(
                             payload = uri.getQueryParameter("data"),
-                            nonce = uri.getQueryParameter("nonce")
+                            nonce = uri.getQueryParameter("nonce"),
                         )
                         val response = try {
                             Gson().fromJson(data?.decodeToString(), SignMessageResponse::class.java)
@@ -174,7 +174,7 @@ class PhantomWalletProvider(
                     } else {
                         val data = decryptPayload(
                             payload = uri.getQueryParameter("data"),
-                            nonce = uri.getQueryParameter("nonce")
+                            nonce = uri.getQueryParameter("nonce"),
                         )
                         val response = try {
                             Gson().fromJson(data?.decodeToString(), SignTransactionResponse::class.java)
@@ -206,7 +206,7 @@ class PhantomWalletProvider(
                     } else {
                         val data = decryptPayload(
                             payload = uri.getQueryParameter("data"),
-                            nonce = uri.getQueryParameter("nonce")
+                            nonce = uri.getQueryParameter("nonce"),
                         )
                         val response = try {
                             Gson().fromJson(data?.decodeToString(), SendTransactionResponse::class.java)
@@ -238,7 +238,7 @@ class PhantomWalletProvider(
             return
         }
 
-        val result =  TweetNaclFast.Box.keyPair()
+        val result = TweetNaclFast.Box.keyPair()
         if (result == null) {
             completion(null, WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to generate key pair"))
             return
@@ -278,7 +278,7 @@ class PhantomWalletProvider(
             } else {
                 completion(
                     null,
-                    WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app")
+                    WalletError(CarteraErrorCode.CONNECTION_FAILED, "Failed to open Phantom app"),
                 )
             }
         } catch (e: Exception) {
@@ -324,11 +324,11 @@ class PhantomWalletProvider(
         val request = SignMessageRequest(
             session = session,
             message = message.toByteArray().encodeToBase58String(),
-            display = "utf8"
+            display = "utf8",
         )
         val uri = createRequestUri(
             request = Gson().toJson(request),
-            action = CallbackAction.onSignMessage
+            action = CallbackAction.onSignMessage,
         )
         if (uri != null) {
             if (openPeerDeeplink(uri)) {
@@ -348,7 +348,7 @@ class PhantomWalletProvider(
         status: WalletOperationStatus?,
         completion: WalletOperationCompletion
     ) {
-        val message =  typedDataProvider?.typedDataAsString
+        val message = typedDataProvider?.typedDataAsString
         if (message == null) {
             completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Typed data is null"))
             return
@@ -358,7 +358,7 @@ class PhantomWalletProvider(
             message = message,
             connected = connected,
             status = status,
-            completion = completion
+            completion = completion,
         )
     }
 
@@ -390,11 +390,11 @@ class PhantomWalletProvider(
 
         val sendRequest = SendTransactionRequest(
             session = session,
-            transaction = data.encodeToBase58String()
+            transaction = data.encodeToBase58String(),
         )
         val uri = createRequestUri(
             request = Gson().toJson(sendRequest),
-            action = CallbackAction.onSendTransaction
+            action = CallbackAction.onSendTransaction,
         )
         if (uri != null) {
             if (openPeerDeeplink(uri)) {
@@ -466,11 +466,11 @@ class PhantomWalletProvider(
                 .appendQueryParameter("nonce", nonce.encodeToBase58String())
                 .appendQueryParameter(
                     "redirect_link",
-                    "${phantomWalletConfig.callbackUrl}/${action.name}"
+                    "${phantomWalletConfig.callbackUrl}/${action.name}",
                 )
                 .appendQueryParameter(
                     "dapp_encryption_public_key",
-                    publicKey.encodeToBase58String()
+                    publicKey.encodeToBase58String(),
                 )
                 .build()
             return uri
@@ -479,7 +479,6 @@ class PhantomWalletProvider(
         }
     }
 }
-
 
 data class ConnectResponse(
     @SerializedName("public_key") val publicKey: String?,
@@ -493,7 +492,7 @@ data class DisconnectRequest(
 data class SignMessageRequest(
     @SerializedName("session") val session: String?,
     @SerializedName("message") val message: String?,
-    @SerializedName("display") val display: String?  // "utf8" | "hex"
+    @SerializedName("display") val display: String? // "utf8" | "hex"
 )
 
 data class SignMessageResponse(

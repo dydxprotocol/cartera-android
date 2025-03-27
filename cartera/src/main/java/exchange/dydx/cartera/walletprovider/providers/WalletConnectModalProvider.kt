@@ -71,6 +71,7 @@ class WalletConnectModalProvider(
     var nav: NavHostController? = null
 
     init {
+        Timber.tag(tag(this)).d("WalletConnectModalProvider initialized")
         val jsonData = application.getResources().openRawResource(R.raw.wc_modal_ids)
             .bufferedReader().use { it.readText() }
         val gson = Gson()

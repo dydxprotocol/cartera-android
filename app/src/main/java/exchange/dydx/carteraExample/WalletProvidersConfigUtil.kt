@@ -1,5 +1,6 @@
 package exchange.dydx.carteraexample
 
+import exchange.dydx.cartera.PhantomWalletConfig
 import exchange.dydx.cartera.WalletConnectModalConfig
 import exchange.dydx.cartera.WalletConnectV1Config
 import exchange.dydx.cartera.WalletConnectV2Config
@@ -26,14 +27,19 @@ object WalletProvidersConfigUtil {
         )
 
         val walletSegueConfig = WalletSegueConfig(
-            callbackUrl = "https://trade.stage.dydx.exchange/walletsegueCarteraExample",
+            callbackUrl = "https://v4-web-internal.vercel.app/walletsegueCarteraExample",
         )
 
+        val phantomWalletConfig = PhantomWalletConfig(
+            callbackUrl = "https://v4-web-internal.vercel.app/phantomCarteraExample",
+            appUrl = "https://v4-web-internal.vercel.app",
+        )
         return WalletProvidersConfig(
             walletConnectV1 = walletConnectV1Config,
             walletConnectV2 = walletConnectV2Config,
             walletConnectModal = WalletConnectModalConfig.default,
             walletSegue = walletSegueConfig,
+            phantomWallet = phantomWalletConfig,
         )
     }
 }

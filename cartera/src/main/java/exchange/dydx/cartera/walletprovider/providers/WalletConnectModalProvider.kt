@@ -85,8 +85,8 @@ class WalletConnectModalProvider(
         WalletConnectModal.initialize(
             init = Modal.Params.Init(
                 core = CoreClient,
-                recommendedWalletsIds = config?.walletIds ?: emptyList(),
-                excludedWalletIds = excludedIds,
+                //     recommendedWalletsIds = config?.walletIds ?: emptyList(),
+                //     excludedWalletIds = excludedIds,
             ),
             onSuccess = {
                 // Callback will be called if initialization is successful
@@ -98,6 +98,10 @@ class WalletConnectModalProvider(
                     .e(error.throwable.stackTraceToString())
             },
         )
+    }
+
+    override fun handleResponse(uri: Uri): Boolean {
+        return false
     }
 
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {

@@ -1,6 +1,7 @@
 package exchange.dydx.cartera.walletprovider
 
 import android.content.Context
+import android.net.Uri
 import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import java.math.BigInteger
@@ -23,8 +24,29 @@ data class WalletRequest(
 
 data class WalletTransactionRequest(
     val walletRequest: WalletRequest,
-    val ethereum: EthereumTransactionRequest?
-)
+    val ethereum: EthereumTransactionRequest?,
+    val solana: ByteArray?
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as WalletTransactionRequest
+
+        if (walletRequest != other.walletRequest) return false
+        if (ethereum != other.ethereum) return false
+        if (!solana.contentEquals(other.solana)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = walletRequest.hashCode()
+        result = 31 * result + (ethereum?.hashCode() ?: 0)
+        result = 31 * result + (solana?.contentHashCode() ?: 0)
+        return result
+    }
+}
 
 data class EthereumTransactionRequest(
     val fromAddress: String,
@@ -61,4 +83,8 @@ interface WalletUserConsentOperationProtocol : WalletOperationProtocol {
     var userConsentDelegate: WalletUserConsentProtocol?
 }
 
-interface WalletOperationProviderProtocol : WalletStatusProviding, WalletUserConsentOperationProtocol
+interface WalletDeeplinkHandlingProtocol {
+    fun handleResponse(uri: Uri): Boolean
+}
+
+interface WalletOperationProviderProtocol : WalletStatusProviding, WalletUserConsentOperationProtocol, WalletDeeplinkHandlingProtocol

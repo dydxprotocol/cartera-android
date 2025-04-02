@@ -11,6 +11,7 @@ import exchange.dydx.cartera.entities.Wallet
 import exchange.dydx.cartera.walletprovider.WalletOperationProviderProtocol
 import exchange.dydx.cartera.walletprovider.WalletUserConsentProtocol
 import exchange.dydx.cartera.walletprovider.providers.MagicLinkProvider
+import exchange.dydx.cartera.walletprovider.providers.PhantomWalletProvider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectModalProvider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV1Provider
 import exchange.dydx.cartera.walletprovider.providers.WalletConnectV2Provider
@@ -23,6 +24,7 @@ sealed class WalletConnectionType(val rawValue: String) {
     object WalletConnectModal : WalletConnectionType("walletConnectModal")
     object WalletSegue : WalletConnectionType("walletSegue")
     object MagicLink : WalletConnectionType("magicLink")
+    object PhantomWallet : WalletConnectionType("phantomWallet")
     class Custom(val value: String) : WalletConnectionType(value)
     object Unknown : WalletConnectionType("unknown")
 
@@ -34,6 +36,7 @@ sealed class WalletConnectionType(val rawValue: String) {
                 WalletConnectModal.rawValue -> WalletConnectModal
                 WalletSegue.rawValue -> WalletSegue
                 MagicLink.rawValue -> MagicLink
+                PhantomWallet.rawValue -> PhantomWallet
                 else -> Custom(rawValue)
             }
         }
@@ -49,9 +52,10 @@ class CarteraConfig(
         var shared: CarteraConfig? = null
 
         fun handleResponse(url: Uri): Boolean {
-            shared?.registration?.get(WalletConnectionType.WalletSegue)?.provider?.let { provider ->
-                val walletSegueProvider = provider as? WalletSegueProvider
-                return walletSegueProvider?.handleResponse(url) ?: false
+            shared?.registration?.values?.forEach {
+                if (it.provider.handleResponse(url)) {
+                    return@handleResponse true
+                }
             }
             return false
         }
@@ -80,6 +84,14 @@ class CarteraConfig(
                     walletSegueConfig = walletProvidersConfig.walletSegue,
                     application = application,
                     launcher = launcher,
+                ),
+            )
+        }
+        if (walletProvidersConfig.phantomWallet != null) {
+            registration[WalletConnectionType.PhantomWallet] = RegistrationConfig(
+                provider = PhantomWalletProvider(
+                    phantomWalletConfig = walletProvidersConfig.phantomWallet,
+                    application = application,
                 ),
             )
         }
@@ -142,7 +154,8 @@ data class WalletProvidersConfig(
     val walletConnectV1: WalletConnectV1Config? = null,
     val walletConnectV2: WalletConnectV2Config? = null,
     val walletConnectModal: WalletConnectModalConfig? = null,
-    val walletSegue: WalletSegueConfig? = null
+    val walletSegue: WalletSegueConfig? = null,
+    val phantomWallet: PhantomWalletConfig? = null,
 )
 
 data class WalletConnectV1Config(
@@ -192,4 +205,9 @@ data class WalletConnectModalConfig(
 
 data class WalletSegueConfig(
     val callbackUrl: String
+)
+
+data class PhantomWalletConfig(
+    val callbackUrl: String,
+    val appUrl: String
 )

@@ -46,7 +46,7 @@ val WalletConfig.iosEnabled: Boolean
         return false
     }
 
-fun WalletConfig.connectionType(context: Context): WalletConnectionType {
+fun WalletConfig.connectionType(): WalletConnectionType {
     connections.firstOrNull()?.type?.let { type ->
         return WalletConnectionType.fromRawValue(type)
     }

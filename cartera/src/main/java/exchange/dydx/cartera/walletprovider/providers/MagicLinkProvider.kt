@@ -1,5 +1,6 @@
 package exchange.dydx.cartera.walletprovider.providers
 
+import android.net.Uri
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.walletprovider.EthereumAddChainRequest
 import exchange.dydx.cartera.walletprovider.WalletConnectCompletion
@@ -26,6 +27,11 @@ class MagicLinkProvider : WalletOperationProviderProtocol {
 
     override var walletStatusDelegate: WalletStatusDelegate? = null
     override var userConsentDelegate: WalletUserConsentProtocol? = null
+
+    override fun handleResponse(uri: Uri): Boolean {
+        return false
+    }
+
     override fun connect(request: WalletRequest, completion: WalletConnectCompletion) {
     }
 

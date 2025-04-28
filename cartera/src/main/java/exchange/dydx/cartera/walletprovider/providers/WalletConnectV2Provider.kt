@@ -576,7 +576,7 @@ class WalletConnectV2Provider(
     private fun fromApprovedSession(session: Sign.Model.ApprovedSession, wallet: Wallet?): WalletInfo {
         return WalletInfo(
             address = session.account(),
-            chainId = session.chainId().toString(),
+            chainId = session.chainId(),
             wallet = wallet,
             peerName = session.metaData?.name,
             peerImageUrl = session.metaData?.icons?.firstOrNull(),
@@ -613,10 +613,10 @@ class WalletConnectV2Provider(
     }
 }
 
-private fun Sign.Model.ApprovedSession.chainId(): Int? {
+private fun Sign.Model.ApprovedSession.chainId(): String? {
     val split = accounts.first().split(":")
     return if (split.count() > 1) {
-        split[1].toInt()
+        split[1]
     } else {
         null
     }

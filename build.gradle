@@ -27,7 +27,7 @@ allprojects {
             targetExclude ".idea/"
 
             ktlint(ktlintVersion)
-                    .userData(["android" : "true"])
+                    //.userData(["android" : "true"])
                     .editorConfigOverride([
                             "ktlint_standard_enum-entry-name-case" : "disabled",
                             "ktlint_standard_trailing-comma-on-declaration-site": "disabled",

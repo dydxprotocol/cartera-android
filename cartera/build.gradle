@@ -55,7 +55,7 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
    // implementation 'com.google.guava:listenablefuture:9999.0-empty-to-avoid-conflict-with-guava'
 
-    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'com.google.code.gson:gson:2.13.1'
 
     //
     // https://github.com/WalletConnect/WalletConnectKotlinV2
@@ -75,7 +75,7 @@ dependencies {
     //
     // https://github.com/WalletConnect/kotlin-walletconnect-lib
     //
-    implementation 'com.github.WalletConnect:kotlin-walletconnect-lib:0.9.9'
+    // implementation 'com.github.WalletConnect:kotlin-walletconnect-lib:0.9.9'
 
 
     //

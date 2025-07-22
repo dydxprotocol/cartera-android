@@ -13,6 +13,7 @@ import exchange.dydx.cartera.CarteraConfig
 import exchange.dydx.cartera.CarteraConstants
 import exchange.dydx.cartera.CarteraProvider
 import exchange.dydx.cartera.entities.Wallet
+import exchange.dydx.cartera.solana.SolanaInteractor
 import exchange.dydx.cartera.tag
 import exchange.dydx.cartera.typeddata.EIP712DomainTypedDataProvider
 import exchange.dydx.cartera.typeddata.WalletTypedData
@@ -22,7 +23,6 @@ import exchange.dydx.cartera.walletprovider.WalletRequest
 import exchange.dydx.cartera.walletprovider.WalletStatusDelegate
 import exchange.dydx.cartera.walletprovider.WalletStatusProtocol
 import exchange.dydx.cartera.walletprovider.WalletTransactionRequest
-import exchange.dydx.carteraexample.solana.SolanaInteractor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch

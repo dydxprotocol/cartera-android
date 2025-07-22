@@ -1,4 +1,4 @@
-package exchange.dydx.carteraexample.solana
+package exchange.dydx.cartera.solana
 
 import com.solana.publickey.SolanaPublicKey
 import com.solana.transaction.AccountMeta

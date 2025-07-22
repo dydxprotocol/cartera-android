@@ -1,4 +1,4 @@
-package exchange.dydx.carteraexample.solana
+package exchange.dydx.cartera.solana
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.solana.publickey.SolanaPublicKey

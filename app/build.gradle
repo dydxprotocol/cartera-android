@@ -65,8 +65,8 @@ dependencies {
     implementation 'androidx.compose.ui:ui-tooling-preview'
     implementation 'androidx.compose.material3:material3'
     implementation 'androidx.compose.material:material'
-    implementation 'androidx.navigation:navigation-runtime-ktx:2.9.1'
-    implementation 'androidx.navigation:navigation-compose:2.9.1'
+    implementation 'androidx.navigation:navigation-runtime-ktx:2.9.2'
+    implementation 'androidx.navigation:navigation-compose:2.9.2'
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.6.1'
@@ -86,9 +86,9 @@ dependencies {
     implementation 'io.github.funkatronics:multimult:0.2.4'
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.9.0")
-    implementation("io.ktor:ktor-client-core:2.3.4")
-    implementation("io.ktor:ktor-client-android:2.3.4")
+    implementation("io.ktor:ktor-client-core:3.2.2")
+    implementation("io.ktor:ktor-client-android:3.2.2")
 
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:okhttp:5.1.0")
     implementation("com.google.code.gson:gson:2.13.1")
 }

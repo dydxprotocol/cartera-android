@@ -1,5 +1,4 @@
 package exchange.dydx.cartera.solana
-import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.solana.publickey.SolanaPublicKey
@@ -11,12 +10,15 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import timber.log.Timber
 import kotlin.math.max
 import kotlin.math.pow
 
 class SolanaInteractor(
     private val rpcUrl: String,
 ) {
+    private val TAG = "SolanaInteractor"
+
     companion object {
         val mainnetUrl = "https://api.mainnet-beta.solana.com"
         val devnetUrl = "https://api.devnet.solana.com"
@@ -42,14 +44,22 @@ class SolanaInteractor(
             .post(requestBody)
             .build()
 
-        val response = client.newCall(request).execute()
-        if (!response.isSuccessful) {
-            println("Request failed: ${response.code}")
+        try {
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) {
+                Timber.tag(TAG).e("Request failed: ${response.code}")
+                return@withContext null
+            }
+
+            val responseBody = response.body?.string() ?: return@withContext null
+            return@withContext gson.fromJson(
+                responseBody,
+                LatestBlockhashResponse::class.java,
+            ).result
+        } catch (e: Exception) {
+            Timber.tag(TAG).e("Request failed: ${e.message}")
             return@withContext null
         }
-
-        val responseBody = response.body?.string() ?: return@withContext null
-        return@withContext gson.fromJson(responseBody, LatestBlockhashResponse::class.java).result
     }
 
     suspend fun getBalance(publicKey: String): Double? = withContext(Dispatchers.IO) {
@@ -73,15 +83,20 @@ class SolanaInteractor(
             .post(requestBody)
             .build()
 
-        val response = client.newCall(request).execute()
-        if (!response.isSuccessful) {
-            println("Request failed: ${response.code}")
+        try {
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) {
+                Timber.tag(TAG).e("Request failed: ${response.code}")
+                return@withContext null
+            }
+
+            val body = response.body?.string() ?: return@withContext null
+            val parsed = gson.fromJson(body, BalanceResponse::class.java)
+            return@withContext parsed.result.value.toDouble() / 10.0.pow(9.0)
+        } catch (e: Exception) {
+            Timber.tag(TAG).e("Request failed: ${e.message}")
             return@withContext null
         }
-
-        val body = response.body?.string() ?: return@withContext null
-        val parsed = gson.fromJson(body, BalanceResponse::class.java)
-        return@withContext parsed.result.value.toDouble() / 10.0.pow(9.0)
     }
 
     suspend fun getTokenBalance(publicKey: String, tokenAddress: String): Double? = withContext(Dispatchers.IO) {
@@ -111,27 +126,33 @@ class SolanaInteractor(
             .post(requestBody)
             .build()
 
-        val response = client.newCall(request).execute()
-        if (!response.isSuccessful) {
-            println("Request failed: ${response.code}")
-            return@withContext null
-        }
-
         try {
-            val parsed = gson.fromJson(response.body?.string(), TokenAccountsResponse::class.java)
-            var balance = 0.0f
-            for (account in parsed.result.value) {
-                val tokenAmount = account.account.data.parsed.info.tokenAmount.uiAmount
-                balance = max(balance, tokenAmount)
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) {
+                Timber.tag(TAG).e("Request failed: ${response.code}")
+                return@withContext null
             }
-            return@withContext balance.toDouble()
+
+            try {
+                val parsed =
+                    gson.fromJson(response.body?.string(), TokenAccountsResponse::class.java)
+                var balance = 0.0f
+                for (account in parsed.result.value) {
+                    val tokenAmount = account.account.data.parsed.info.tokenAmount.uiAmount
+                    balance = max(balance, tokenAmount)
+                }
+                return@withContext balance.toDouble()
+            } catch (e: Exception) {
+                Timber.tag(TAG).e("Failed to parse response: ${e.message}")
+                return@withContext null
+            }
         } catch (e: Exception) {
-            println("Failed to parse response: ${e.message}")
+            Timber.tag(TAG).e("Request failed: ${e.message}")
             return@withContext null
         }
     }
 
-    suspend fun sendRawTransaction(base64Tx: String): String? = withContext(Dispatchers.IO) {
+    suspend fun sendRawTransaction(base58Tx: String): String? = withContext(Dispatchers.IO) {
         val client = OkHttpClient()
         val gson = Gson()
 
@@ -139,7 +160,7 @@ class SolanaInteractor(
             "jsonrpc" to "2.0",
             "id" to 1,
             "method" to "sendTransaction",
-            "params" to listOf(base64Tx, mapOf("encoding" to "base64")),
+            "params" to listOf(base58Tx, mapOf("encoding" to "base58")),
         )
 
         val requestBody = RequestBody.create(
@@ -152,14 +173,27 @@ class SolanaInteractor(
             .post(requestBody)
             .build()
 
-        val response = client.newCall(request).execute()
-        if (!response.isSuccessful) {
-            println("Request failed: ${response.code}")
+        try {
+
+            val response = client.newCall(request).execute()
+            if (!response.isSuccessful) {
+                println("Request failed: ${response.code}")
+                return@withContext null
+            }
+
+            try {
+                val json = response.body?.string() ?: return@withContext null
+                val parsed =
+                    gson.fromJson(json, SendTransactionResponse::class.java)
+                return@withContext parsed.result
+            } catch (e: Exception) {
+                Timber.tag(TAG).e("Failed to parse response: ${e.message}")
+                return@withContext null
+            }
+        }  catch (e: Exception) {
+            Timber.tag(TAG).e("Request failed: ${e.message}")
             return@withContext null
         }
-
-        val body = response.body?.string() ?: return@withContext null
-        return@withContext body
     }
 
     fun buildTestMemoTransaction(address: SolanaPublicKey, memo: String) =
@@ -244,4 +278,10 @@ data class TokenAmount(
     val amount: String,
     val decimals: Int,
     val uiAmount: Float
+)
+
+data class SendTransactionResponse(
+    val jsonrpc: String,
+    val result: String, // the transaction signature (base58)
+    val id: Int
 )

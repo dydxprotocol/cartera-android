@@ -13,6 +13,7 @@ import exchange.dydx.cartera.PhantomWalletConfig
 import exchange.dydx.cartera.decodeBase58
 import exchange.dydx.cartera.encodeToBase58String
 import exchange.dydx.cartera.entities.Wallet
+import exchange.dydx.cartera.solana.SolanaInteractor
 import exchange.dydx.cartera.tag
 import exchange.dydx.cartera.typeddata.WalletTypedDataProviderProtocol
 import exchange.dydx.cartera.typeddata.typedDataAsString
@@ -362,6 +363,29 @@ class PhantomWalletProvider(
         )
     }
 
+    private fun doSignTransaction(
+        transaction: String,
+        completion: WalletOperationCompletion
+    ) {
+        val request = SignTransactionRequest(
+            session = session,
+            transaction = transaction,
+        )
+        val uri = createRequestUri(
+            request = Gson().toJson(request),
+            action = CallbackAction.onSignTransaction,
+        )
+        if (uri != null) {
+            if (openPeerDeeplink(uri)) {
+                operationCompletion = completion
+            } else {
+                completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to open Phantom app"))
+            }
+        } else {
+            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to create request URI"))
+        }
+    }
+
     override fun send(
         request: WalletTransactionRequest,
         connected: WalletConnectedCompletion?,
@@ -388,22 +412,32 @@ class PhantomWalletProvider(
             return
         }
 
-        val sendRequest = SendTransactionRequest(
-            session = session,
-            transaction = data.encodeToBase58String(),
-        )
-        val uri = createRequestUri(
-            request = Gson().toJson(sendRequest),
-            action = CallbackAction.onSendTransaction,
-        )
-        if (uri != null) {
-            if (openPeerDeeplink(uri)) {
-                operationCompletion = completion
-            } else {
-                completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to open Phantom app"))
+        doSignTransaction(transaction = data.encodeToBase58String()) { signed, error ->
+            if (error != null || signed == null) {
+                completion(null, error)
+                return@doSignTransaction
             }
-        } else {
-            completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to create request URI"))
+
+            val isMainnet = request.walletRequest.chainId == "1"
+            val solanaInteractor = SolanaInteractor(
+                rpcUrl = if (isMainnet) {
+                    SolanaInteractor.mainnetUrl
+                } else {
+                    SolanaInteractor.devnetUrl
+                }
+            )
+
+            val scope = CoroutineScope(Dispatchers.Unconfined)
+            scope.launch {
+                val hash = solanaInteractor.sendRawTransaction(signed)
+                CoroutineScope(Dispatchers.Main).launch {
+                    if (hash != null) {
+                        completion(hash, null)
+                    } else {
+                        completion(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to send transaction"))
+                    }
+                }
+            }
         }
     }
 

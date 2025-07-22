@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ModalBottomSheetLayout
 import androidx.compose.material.ModalBottomSheetState
@@ -75,6 +76,7 @@ object WalletList {
         var useWcModal: Boolean by mutableStateOf(false)
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     @SuppressLint("CoroutineCreationDuringComposition")
     @Composable
     fun Content() {
@@ -119,6 +121,7 @@ object WalletList {
         }
     }
 
+    @OptIn(ExperimentalMaterialApi::class)
     @Composable
     fun WalletListContent(
         viewState: WalletList.WalletListState,

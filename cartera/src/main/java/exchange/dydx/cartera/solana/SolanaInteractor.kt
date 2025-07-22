@@ -174,7 +174,6 @@ class SolanaInteractor(
             .build()
 
         try {
-
             val response = client.newCall(request).execute()
             if (!response.isSuccessful) {
                 println("Request failed: ${response.code}")
@@ -190,7 +189,7 @@ class SolanaInteractor(
                 Timber.tag(TAG).e("Failed to parse response: ${e.message}")
                 return@withContext null
             }
-        }  catch (e: Exception) {
+        } catch (e: Exception) {
             Timber.tag(TAG).e("Request failed: ${e.message}")
             return@withContext null
         }

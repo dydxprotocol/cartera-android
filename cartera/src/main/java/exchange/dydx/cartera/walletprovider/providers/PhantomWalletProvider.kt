@@ -424,7 +424,7 @@ class PhantomWalletProvider(
                     SolanaInteractor.mainnetUrl
                 } else {
                     SolanaInteractor.devnetUrl
-                }
+                },
             )
 
             val scope = CoroutineScope(Dispatchers.Unconfined)

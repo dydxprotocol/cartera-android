@@ -98,5 +98,5 @@ task sourceJar(type: Jar) {
 
 // !!!! Switch between local and remote publishing here: !!!!
 // IMPORTANT: Be sure to switch back to "publishRemote" before committing.  Otherwise, the deployment will fail.
-//apply from: 'publishLocal.gradle'
-apply from: 'publishRemote.gradle'
+apply from: 'publishLocal.gradle'
+//apply from: 'publishRemote.gradle'

@@ -1,4 +1,5 @@
 package exchange.dydx.cartera.solana
+import android.content.Context
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.solana.publickey.SolanaPublicKey
@@ -128,6 +129,37 @@ class SolanaInteractor(
             println("Failed to parse response: ${e.message}")
             return@withContext null
         }
+    }
+
+    suspend fun sendRawTransaction(base64Tx: String): String? = withContext(Dispatchers.IO) {
+        val client = OkHttpClient()
+        val gson = Gson()
+
+        val json = mapOf(
+            "jsonrpc" to "2.0",
+            "id" to 1,
+            "method" to "sendTransaction",
+            "params" to listOf(base64Tx, mapOf("encoding" to "base64")),
+        )
+
+        val requestBody = RequestBody.create(
+            "application/json; charset=utf-8".toMediaTypeOrNull(),
+            gson.toJson(json),
+        )
+
+        val request = Request.Builder()
+            .url(rpcUrl)
+            .post(requestBody)
+            .build()
+
+        val response = client.newCall(request).execute()
+        if (!response.isSuccessful) {
+            println("Request failed: ${response.code}")
+            return@withContext null
+        }
+
+        val body = response.body?.string() ?: return@withContext null
+        return@withContext body
     }
 
     fun buildTestMemoTransaction(address: SolanaPublicKey, memo: String) =

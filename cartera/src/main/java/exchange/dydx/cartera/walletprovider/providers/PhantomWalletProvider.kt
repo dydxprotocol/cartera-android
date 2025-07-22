@@ -48,7 +48,6 @@ class PhantomWalletProvider(
         onDisconnect("disconnect"),
         onSignMessage("signMessage"),
         onSignTransaction("signTransaction"),
-        onSendTransaction("signAndSendTransaction")
     }
 
     private var _walletStatus = WalletStatusImp()
@@ -185,38 +184,6 @@ class PhantomWalletProvider(
                         if (response != null) {
                             CoroutineScope(Dispatchers.Main).launch {
                                 operationCompletion?.invoke(response.transaction, null)
-                                operationCompletion = null
-                            }
-                        } else {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, "Failed to decrypt payload"))
-                                operationCompletion = null
-                            }
-                        }
-                    }
-                }
-            }
-
-            CallbackAction.onSendTransaction.name -> {
-                if (operationCompletion != null) {
-                    if (errorCode != null) {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            operationCompletion?.invoke(null, WalletError(CarteraErrorCode.UNEXPECTED_RESPONSE, errorMessage))
-                            operationCompletion = null
-                        }
-                    } else {
-                        val data = decryptPayload(
-                            payload = uri.getQueryParameter("data"),
-                            nonce = uri.getQueryParameter("nonce"),
-                        )
-                        val response = try {
-                            Gson().fromJson(data?.decodeToString(), SendTransactionResponse::class.java)
-                        } catch (e: Exception) {
-                            null
-                        }
-                        if (response != null) {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                operationCompletion?.invoke(response.signature, null)
                                 operationCompletion = null
                             }
                         } else {

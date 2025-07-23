@@ -7,6 +7,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.material.rememberModalBottomSheetState
 import androidx.compose.material3.MaterialTheme
@@ -27,7 +28,7 @@ import exchange.dydx.cartera.walletprovider.providers.WalletConnectModalProvider
 
 class MainActivity : ComponentActivity() {
 
-    @OptIn(ExperimentalMaterialNavigationApi::class)
+    @OptIn(ExperimentalMaterialNavigationApi::class, ExperimentalMaterialApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 

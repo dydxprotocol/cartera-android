@@ -209,5 +209,7 @@ data class WalletSegueConfig(
 
 data class PhantomWalletConfig(
     val callbackUrl: String,
-    val appUrl: String
+    val appUrl: String,
+    val solanaMainnetUrl: String? = null,
+    val solanaTestnetUrl: String? = null,
 )

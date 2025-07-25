@@ -388,9 +388,9 @@ class PhantomWalletProvider(
             val isMainnet = request.walletRequest.chainId == "1"
             val solanaInteractor = SolanaInteractor(
                 rpcUrl = if (isMainnet) {
-                    SolanaInteractor.mainnetUrl
+                    phantomWalletConfig.solanaMainnetUrl ?: SolanaInteractor.mainnetUrl
                 } else {
-                    SolanaInteractor.devnetUrl
+                    phantomWalletConfig.solanaTestnetUrl ?: SolanaInteractor.devnetUrl
                 },
             )
 
